@@ -3,4 +3,6 @@
 install-sh
 missing
 autom4te.cache
+configure
+aclocal.m4
 
