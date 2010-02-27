@@ -1,0 +1,6 @@
+*.log
+*.in
+install-sh
+missing
+autom4te.cache
+
