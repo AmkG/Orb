@@ -5,6 +5,10 @@
 #pragma once
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include<stdint.h>
 #include<stdlib.h>
 
@@ -88,9 +92,13 @@ static inline void Orb_gc_defglobal(Orb_t* p) {
 
 void Orb_post_gc_init(int argc, char* argv[]);
 void Orb_gc_only_init(void);
-static void Orb_init(int argc, char* argv[]) {
+static inline void Orb_init(int argc, char* argv[]) {
 	Orb_gc_only_init();
 	Orb_post_gc_init(argc, argv);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBORB_H */
