@@ -111,6 +111,43 @@ void Orb_CEL_lock(void);
 /*determines if we have the C Extension Lock*/
 int Orb_CEL_havelock(void);
 
+/*exception handling*/
+/*
+Orb_TRY(E) {
+	Orb_t foo = Orb_call1(f, a);
+	if(foo == Orb_NIL) {
+		Orb_THROW_cc("foo", "something");
+	}
+	return foo;
+} Orb_CATCH(E) {
+	Orb_t type = Orb_E_TYPE(E);
+	Orb_t val = Orb_E_VALUE(E);
+	if(type != Orb_symbol_cc("foo")) {
+		Orb_E_RETHROW(E);
+	} else {
+		return val;
+	}
+} Orb_ENDTRY;
+*/
+#include<setjmp.h>
+
+struct Orb_priv_eh_s;
+#define Orb_TRY(E)\
+	do { struct Orb_priv_eh_s* E;\
+		if(!setjmp(Orb_priv_eh_init(&E)))
+#define Orb_CATCH(E)\
+	else
+#define Orb_ENDTRY\
+	} while(0);
+
+void* Orb_priv_eh_init(struct Orb_priv_eh_s**);
+void Orb_THROW(Orb_t, Orb_t);
+void Orb_THROW_cc(char const*, char const*);
+
+Orb_t Orb_E_TYPE(struct Orb_priv_eh_s*);
+Orb_t Orb_E_VALUE(struct Orb_priv_eh_s*);
+Orb_t Orb_E_RETHROW(struct Orb_priv_eh_s*);
+
 #ifdef __cplusplus
 }
 #endif
