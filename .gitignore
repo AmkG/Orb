@@ -9,4 +9,13 @@ config.guess
 config.sub
 depcomp
 ltmain.sh
+config.status
+config.h
+.deps
+.libs
+*.la
+*.lo
+Makefile
+libtool
+stamp-h1
 
