@@ -81,6 +81,8 @@ Orb_t Orb_t_from_cf1(Orb_t (*cf)(Orb_t));
 Orb_t Orb_t_from_cf2(Orb_t (*cf)(Orb_t, Orb_t));
 Orb_t Orb_t_from_cf3(Orb_t (*cf)(Orb_t, Orb_t, Orb_t));
 
+/*garbage collector*/
+
 void* Orb_gc_malloc(size_t);
 void* Orb_gc_malloc_pointerfree(size_t);
 void Orb_gc_free(void*); /*explicit free does not check accessibility!*/
@@ -92,6 +94,43 @@ void Orb_gc_undefglobals(Orb_t*, size_t);
 static inline void Orb_gc_undefglobal(Orb_t* p) {
 	Orb_gc_undefglobals(p, 1);
 }
+/*when the GC determines that the given area is inaccessible,
+call the finalizer.
+Finalizers are not necessarily called if cycles more
+complicated than pointers-to-self are found.
+This is because the GC calls finalizers in a particular
+order.
+See Orb_gc_autoclear_on_finalize() for workarounds for
+cycles.
+*/
+void Orb_gc_deffinalizer(
+	void* area,
+	void (*finalizer)(void* area, void* client_data),
+	void* client_data
+);
+void Orb_gc_undeffinalizer(
+	void* area
+);
+/*when the GC determines that the given area is inaccessible
+from roots, clear the given area_pointer.
+The area_pointer may or may not be part of the object, and
+it may or may not "normally" point to the object itself.
+This is needed to handle finalization order of cycles.  If
+an object can possibly cause cycles via a particular pointer,
+but must be finalized even so (and the pointer is not
+absolutely needed for finalization anyway) then you can
+register that particular pointer via this function.  When
+the object is about to be finalized, the pointer is cleared
+and the cycle, if any, gets broken, allowing the GC to
+determine an order for finalization.
+This can also be used to implement immutable weak pointers;
+the weak pointer is allocated in pointerfree space, then
+registered as the area_pointer here.
+*/
+void Orb_gc_autoclear_on_finalize(
+	void* area,
+	void** area_pointer
+);
 
 void Orb_post_gc_init(int argc, char* argv[]);
 void Orb_gc_only_init(void);
