@@ -5,6 +5,8 @@
 #pragma once
 #endif
 
+#include<liborb-config.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
