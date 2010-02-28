@@ -97,6 +97,19 @@ static inline void Orb_init(int argc, char* argv[]) {
 	Orb_post_gc_init(argc, argv);
 }
 
+/*starts a new thread, invoking the given function*/
+Orb_t Orb_new_thread(Orb_t);
+
+Orb_t Orb_new_atom(Orb_t);
+Orb_t Orb_new_sema(size_t);
+
+/*releases the C Extension Lock*/
+void Orb_CEL_unlock(void);
+/*re-acquires the C Extension Lock*/
+void Orb_CEL_lock(void);
+/*determines if we have the C Extension Lock*/
+int Orb_CEL_havelock(void);
+
 #ifdef __cplusplus
 }
 #endif
