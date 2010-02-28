@@ -80,13 +80,14 @@ Orb_t Orb_t_from_cf2(Orb_t (*cf)(Orb_t, Orb_t));
 Orb_t Orb_t_from_cf3(Orb_t (*cf)(Orb_t, Orb_t, Orb_t));
 
 void* Orb_gc_malloc(size_t);
+void* Orb_gc_malloc_pointerfree(size_t);
 void Orb_gc_free(void*); /*explicit free does not check accessibility!*/
 void Orb_gc_defglobals(Orb_t*, size_t);
 static inline void Orb_gc_defglobal(Orb_t* p) {
 	Orb_gc_defglobals(p, 1);
 }
 void Orb_gc_undefglobals(Orb_t*, size_t);
-static inline void Orb_gc_defglobal(Orb_t* p) {
+static inline void Orb_gc_undefglobal(Orb_t* p) {
 	Orb_gc_undefglobals(p, 1);
 }
 
