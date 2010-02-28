@@ -6,7 +6,7 @@ AC_INIT([Orb], [0.1], [almkglor@gmail.com])
 AM_INIT_AUTOMAKE([foreign])
 
 AC_CONFIG_SRCDIR([src/symbol.c])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([inc/config.h])
 
 LT_INIT
 
