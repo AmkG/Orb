@@ -148,6 +148,36 @@ Orb_t Orb_E_TYPE(struct Orb_priv_eh_s*);
 Orb_t Orb_E_VALUE(struct Orb_priv_eh_s*);
 Orb_t Orb_E_RETHROW(struct Orb_priv_eh_s*);
 
+/*object construction*/
+/*
+Orb_t rv;
+Orb_BUILDER {
+	Orb_B_PARENT(Orb_NOTFOUND);
+	Orb_B_FIELD_cc("**val**", val);
+} rv = Orb_ENDBUILDER;
+*/
+struct Orb_priv_ob_s;
+#define Orb_BUILDER\
+	do { struct Orb_priv_ob_s* Orb_priv_ob = Orb_priv_ob_start();\
+#define Orb_B_PARENT(v)\
+		Orb_priv_ob_parent(Orb_priv_ob, v)
+#define Orb_B_FIELD_IGNORE_VIRTUAL(f, v)\
+		Orb_priv_ob_field_ignore_virtual(Orb_priv_ob, f, v)
+#define Orb_B_FIELD(f, v)\
+		Orb_priv_ob_field(Orb_priv_ob, f, v)
+#define Orb_B_FIELD_IGNORE_VIRTUAL_cc(f, v)\
+		Orb_priv_ob_field_ignore_virtual(Orb_priv_ob, Orb_symbol_cc(f), v)
+#define Orb_B_FIELD_cc(f, v)\
+		Orb_priv_ob_field(Orb_priv_ob, Orb_symbol_cc(f), v)
+#define Orb_ENDBUILDER\
+	Orb_priv_ob_build(Orb_priv_ob); } while(0)
+
+struct Orb_priv_ob_s* Orb_priv_ob_start(void);
+void Orb_priv_ob_parent(struct Orb_priv_ob_s*, Orb_t);
+void Orb_priv_ob_field_ignore_virtual(struct Orb_priv_ob_s*, Orb_t, Orb_t);
+void Orb_priv_ob_field(struct Orb_priv_ob_s*, Orb_t, Orb_t);
+void Orb_priv_ob_build(struct Orb_priv_ob_s*);
+
 #ifdef __cplusplus
 }
 #endif
