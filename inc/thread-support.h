@@ -30,7 +30,6 @@ Orb_cell_t Orb_cell_init(Orb_t);
 Orb_t Orb_cell_get(Orb_cell_t);
 void Orb_cell_set(Orb_cell_t, Orb_t);
 int Orb_cell_cas(Orb_cell_t, Orb_t, Orb_t);
-void Orb_cell_deinit(Orb_cell_t);
 
 #endif /* THREAD_SUPPORT_H */
 
