@@ -27,7 +27,17 @@ typedef struct Orb_cell_s* Orb_cell_t;
 Orb_cell_t Orb_cell_init(Orb_t);
 Orb_t Orb_cell_get(Orb_cell_t);
 void Orb_cell_set(Orb_cell_t, Orb_t);
-int Orb_cell_cas(Orb_cell_t, Orb_t, Orb_t);
+/*compare and swap, returning current value of cell*/
+Orb_t Orb_cell_cas_get(Orb_cell_t, Orb_t, Orb_t);
+/*compare and swap, returning 0 if cas failed and non-0 if
+cas succeeded.
+*/
+static inline int Orb_cell_cas(Orb_cell_t c, Orb_t o, Orb_t n) {
+	return o == Orb_cell_cas_get(c, o, n);
+}
+
+/*general*/
+void Orb_thread_support_init(void);
 
 #endif /* THREAD_SUPPORT_H */
 
