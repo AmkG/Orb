@@ -78,11 +78,11 @@ static inline Orb_t Orb_call1(Orb_t f, Orb_t a) {
 	Orb_t argv[2]; argv[0] = f; argv[1] = a;
 	return Orb_call(argv, 2);
 }
-Orb_t Orb_call2(Orb_t f, Orb_t a, Orb_t b) {
+static inline Orb_t Orb_call2(Orb_t f, Orb_t a, Orb_t b) {
 	Orb_t argv[3]; argv[0] = f; argv[1] = a; argv[2] = b;
 	return Orb_call(argv, 3);
 }
-Orb_t Orb_call3(Orb_t f, Orb_t a, Orb_t b, Orb_t c) {
+static inline Orb_t Orb_call3(Orb_t f, Orb_t a, Orb_t b, Orb_t c) {
 	Orb_t argv[4]; argv[0] = f; argv[1] = a; argv[2] = b; argv[3] = c;
 	return Orb_call(argv, 4);
 }
