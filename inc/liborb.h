@@ -102,6 +102,8 @@ This is because the GC calls finalizers in a particular
 order.
 See Orb_gc_autoclear_on_finalize() for workarounds for
 cycles.
+client_data can be a Orb_gc_malloc()'ed area, and it
+will be retained until the finalizer is called.
 */
 void Orb_gc_deffinalizer(
 	void* area,
