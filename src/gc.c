@@ -35,3 +35,32 @@ void Orb_gc_undefglobals(Orb_t* p, size_t n) {
 	GC_remove_roots((void*)p, (void*)p + n);
 }
 
+struct findat {
+	void (*finalizer)(void*, void*);
+	void* client_data;
+};
+static void my_finalizer(GC_PTR obj, GC_PTR tofindat) {
+	struct findat* pfindat = (struct findat*) (void*) tofindat;
+	pfindat->finalizer((void*) obj, pfindat->client_data);
+}
+void Orb_gc_deffinalizer(
+		void* area,
+		void (*finalizer)(void*, void*),
+		void* client_data) {
+	struct findat* dat = GC_MALLOC(sizeof(struct findat));
+	dat->finalizer = finalizer;
+	dat->client_data = client_data;
+	GC_REGISTER_FINALIZER_IGNORE_SELF(
+		(GC_PTR) area, &my_finalizer, (GC_PTR) dat,
+		0, 0
+	);
+}
+void Orb_gc_undeffinalizer(void* area) {
+	GC_REGISTER_FINALIZER_IGNORE_SELF((GC_PTR) area, 0, 0, 0, 0);
+}
+void Orb_gc_autoclear_on_finalize(void* area, void** area_pointer) {
+	GC_GENERAL_REGISTER_DISAPPEARING_LINK(
+		(GC_PTR) area, (GC_PTR) area_pointer
+	);
+}
+
