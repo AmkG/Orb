@@ -21,6 +21,14 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
 # Checks for libraries.
+# check for pthreads
+AX_PTHREAD
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
+AC_SUBST([LIBS], [$LIBS])
+AC_SUBST([CFLAGS], [$CFLAGS])
+AC_SUBST([CC], [$CC])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h gc/gc.h])
