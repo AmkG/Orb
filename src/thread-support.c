@@ -13,13 +13,13 @@
 #ifndef HAVE_SOME_CAS
 
 	/*default implementation if no CAS available*/
-	#define CAS_MUTEXES 16
-	static pthread_mutex_t cas_mutexes[CAS_MUTEXES];
+	#define N_CAS_MUTEXES 16
+	static pthread_mutex_t cas_mutexes[N_CAS_MUTEXES];
 
 	/*CAS implementations should #define this into nothing*/
 	static void cas_init(void) {
 		size_t i;
-		for(i = 0; i < CAS_MUTEXES; ++i) {
+		for(i = 0; i < N_CAS_MUTEXES; ++i) {
 			pthread_mutex_init(&cas_mutexes[i], 0);
 		}
 	}
@@ -27,7 +27,7 @@
 	static Orb_t cas(Orb_t* loc, Orb_t old, Orb_t newval) {
 		size_t i = (size_t) loc;
 		i = i >> 4;
-		i = i % CAS_MUTEXES;
+		i = i % N_CAS_MUTEXES;
 		pthread_mutex_lock(&cas_mutexes[i]);
 		Orb_t curv = *loc;
 		if(curv == old) *loc = newval;
@@ -37,7 +37,7 @@
 	static Orb_t safe_read(Orb_t* loc) {
 		size_t i = (size_t) loc;
 		i = i >> 4;
-		i = i % CAS_MUTEXES;
+		i = i % N_CAS_MUTEXES;
 		pthread_mutex_lock(&cas_mutexes[i]);
 		Orb_t curv = *loc;
 		pthread_mutex_unlock(&cas_mutexes[i]);
@@ -79,5 +79,9 @@ void Orb_cell_set(Orb_cell_t c, Orb_t val) {
 }
 Orb_t Orb_cell_cas_get(Orb_cell_t c, Orb_t old, Orb_t newv) {
 	return cas(&c->core, old, newv);
+}
+
+void Orb_thread_support_init(void) {
+	cas_init();
 }
 
