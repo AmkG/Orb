@@ -2,13 +2,66 @@
 #include"liborb.h"
 #include"thread-support.h"
 
-#include<stdlib.h>
-
 #define GC_THREADS
 #define GC_PTHREADS
 #include<gc/gc.h>
 
+#include<stdlib.h>
+#include<semaphore.h>
+#include<errno.h>
 
+/*
+ * Semaphores
+ */
+struct Orb_sema_s {
+	sem_t core;
+};
+
+static void sema_finalizer(void* vsema, void*) {
+	Orb_sema_t sema = (Orb_sema_t) vsema;
+	sem_destroy(&sema->core);
+}
+
+Orb_sema_t Orb_sema_init(unsigned int init) {
+	Orb_sema_t rv = Orb_gc_malloc(sizeof(struct Orb_sema_s));
+	if(sem_init(&rv->core, 0, init) != 0) {
+		Orb_THROW_cc("sema", "Unable to initialize semaphore");
+	}
+	Orb_gc_deffinalizer(rv, &sema_finalizer, 0);
+	return rv;
+}
+
+unsigned int Orb_sema_get(Orb_sema_t sema) {
+	int rv;
+	sem_getvalue(&sema->core, &rv);
+	return rv;
+}
+static int wrap_sem_trywait(sem_t* sp) {
+	int rv;
+	do {
+		errno = 0;
+		rv = sem_trywait(sp);
+	} while(rv != 0 && errno == EINTR);
+	return rv;
+}
+static void wrap_sem_wait(sem_t* sp) {
+	int rv;
+	do {
+		errno = 0;
+		rv = sem_wait(sp);
+	} while(rv != 0 && errno == EINTR);
+}
+void Orb_sema_wait(Orb_sema_t sema) {
+	do {
+		if(0 == wrap_sem_trywait(&sema->core)) {
+			return;
+		}
+	} while(GC_collect_a_little());
+	wrap_sem_wait(&sema->core);
+}
+void Orb_sema_post(Orb_sema_t sema) {
+	sem_post(&sema->core);
+}
 
 #ifndef HAVE_SOME_CAS
 
