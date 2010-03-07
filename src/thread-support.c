@@ -17,7 +17,7 @@ struct Orb_sema_s {
 	sem_t core;
 };
 
-static void sema_finalizer(void* vsema, void*) {
+static void sema_finalizer(void* vsema, void* _ignore_) {
 	Orb_sema_t sema = (Orb_sema_t) vsema;
 	sem_destroy(&sema->core);
 }
