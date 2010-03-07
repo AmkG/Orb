@@ -1,0 +1,4 @@
+#! /bin/sh
+
+gcc -c -I../inc/ -o/dev/null "$@"
+
