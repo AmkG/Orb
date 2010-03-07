@@ -53,6 +53,8 @@ perform the actual access to the array for each thread.  If the
 array is too small, we just enlarge it.  If it doesn't exist yet,
 we create it.
 
+Finalizing an Orb_tls_s simply returns it to the freelist.
+
 */
 
 static pthread_key_t the_thread_local_key;
@@ -131,14 +133,9 @@ top:
 		rv = Orb_gc_malloc(TLS_BATCH_ALLOC * sizeof(struct Orb_tls_s));
 		size_t i;
 		size_t maxindex = freelistdata->maxindex;
-		/*set up structurres and add finalizers*/
+		/*set up structures*/
 		for(i = 0; i < TLS_BATCH_ALLOC; ++i) {
 			rv[i].index = maxindex + i;
-			Orb_gc_deffinalizer(
-				&rv[i],
-				&individual_tls_finalizer,
-				0
-			);
 		}
 		/*set up list structure*/
 		for(i = 0; i < TLS_BATCH_ALLOC - 1; ++i) {
@@ -156,6 +153,7 @@ top:
 	}
 
 	rv->next = 0;
+	Orb_gc_deffinalizer(rv, &individual_tls_finalizer, 0);
 
 	return rv;
 }
