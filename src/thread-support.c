@@ -24,7 +24,7 @@ provided by pthreads as roots.
 Worse, we want thread-locals to be garbage collected also.
 
 We get around this by allocating a single "thread-local info block"
-for each thread, composed of a size and an array of void*:
+for each thread, composed of a size and an array of slots:
 
    +----+  +--+--+--+--+--+--+
 T1 |size|  |  |  |  |  |  |  |...
@@ -38,45 +38,57 @@ T3 |size|  |  |  |  |  |  |  |...
 
 Each thread keeps track of this via a single pthreads thread-local.
 
-An Orb_tls_s is composed of an index and a link to another
-Orb_tls_s.  Globally, there exists a list of free struct
-Orb_tls_s.  This global list is accessed via an Orb_cell_t slot.
+Each slot (struct tls_slot_s) in the array is composed of a void*
+and a version.  The version is used to differentiate slot indices
+between the current Orb_tls_t, and a previously garbage-collected
+one.
+
+An Orb_tls_s is composed of an index and a version.  Globally,
+there exists a list of free struct Orb_tls_s.  This global list is
+protected by a lock.
 
 When the free list is exhausted, we simply allocate a bunch of
-struct Orb_tls_s and add them to the freelist.  Their indices
-are initialized to the current maxindex, incremented each time.
-The new maxindex is attached to the freelist, and then we proceed
-as normal.
+indices and add them to the freelist.  The new indices are given
+a version of 1.
 
 When an Orb_tls_s is accessed, we get the index from it, then
 perform the actual access to the array for each thread.  If the
 array is too small, we just enlarge it.  If it doesn't exist yet,
 we create it.
 
-Finalizing an Orb_tls_s simply returns it to the freelist.
+Finalizing an Orb_tls_s simply returns its index to the freelist,
+with an incremented version.
 
 */
 
 static pthread_key_t the_thread_local_key;
-static Orb_t the_tls_freelist;
 
 struct Orb_tls_s {
 	size_t index;
-	Orb_tls_t next;
+	size_t version;
 };
 
+struct tls_slot_s {
+	void* value;
+	size_t version;
+};
+
+/*
+ * Determines the adress of the value slot for the TLS pointed to
+ * by the tls_obj
+ */
 static void** get_tls(Orb_tls_t tls_obj) {
 	size_t i = tls_obj->index;
 
 	Orb_t* tls_info = pthread_getspecific(the_thread_local_key);
 
 	size_t size; /*tls_info[0]*/
-	void** data; /*tls_info[1]*/
+	struct tls_slot_s* data; /*tls_info[1]*/
 
 	if(tls_info == 0) {
 		size = i + 1;
-		data = Orb_gc_malloc(size * sizeof(void*));
-		tls_info = Orb_gc_malloc(2 * sizeof(Orb_t));
+		data = Orb_gc_malloc(size * sizeof(struct tls_slot_s));
+		tls_info = malloc(2 * sizeof(Orb_t));
 		Orb_gc_defglobals(tls_info, 2);
 		tls_info[0] = Orb_t_from_integer(size);
 		tls_info[1] = Orb_t_from_pointer(data);
@@ -86,15 +98,22 @@ static void** get_tls(Orb_tls_t tls_obj) {
 		data = Orb_t_as_pointer(tls_info[1]);
 		if(size <= i) {
 			/*realloc*/
-			void** ndata = Orb_gc_malloc((i + 1) * sizeof(void*));
-			memcpy(ndata, data, size * sizeof(void*));
+			struct tls_slot_s* ndata = Orb_gc_malloc((i + 1) * sizeof(struct tls_slot_s));
+			memcpy(ndata, data, size * sizeof(struct tls_slot_s));
 			data = ndata;
 			size = i + 1;
 			tls_info[0] = Orb_t_from_integer(size);
 			tls_info[1] = Orb_t_from_pointer(data);
 		}
 	}
-	return &data[i];
+	if(data[i].version != tls_obj->version) {
+		/*the index was reused after being finalized, so
+		clear our slot.
+		*/
+		data[i].version = tls_obj->version;
+		data[i].value = 0;
+	}
+	return &data[i].value;
 }
 
 void* Orb_tls_get(Orb_tls_t tls_obj) {
@@ -104,89 +123,95 @@ void Orb_tls_set(Orb_tls_t tls_obj, void* p) {
 	*get_tls(tls_obj) = p;
 }
 
-struct tls_freelist_s {
-	struct Orb_tls_s* freelist;
-	size_t maxindex;
-};
-
 #define TLS_BATCH_ALLOC 8
+static pthread_mutex_t tls_freelist_lock = PTHREAD_MUTEX_INITIALIZER;
+static size_t* tls_freelist = 0;
+static size_t* tls_versions = 0;
+static size_t tls_size = 0;
+static size_t tls_capacity = 0;
+static size_t tls_maxindex = 0;
 
 static void individual_tls_finalizer(void*, void*);
 
 Orb_tls_t Orb_tls_init(void) {
-	Orb_cell_t freelistcell = Orb_t_as_pointer(the_tls_freelist);
-	Orb_t ofreelistdata = Orb_cell_get(freelistcell);
+	size_t rv_index;
+	size_t rv_version;
 
-	struct tls_freelist_s* nfreelistdata = Orb_gc_malloc(
-		sizeof(struct tls_freelist_s)
-	);
-	Orb_t onfreelistdata = Orb_t_from_pointer(nfreelistdata);
+	/*TODO: consider blocking signals*/
+	pthread_mutex_lock(&tls_freelist_lock);
 
-	struct tls_freelist_s* freelistdata;
-	Orb_tls_t rv;
-	Orb_t check;
-
-top:
-	freelistdata = Orb_t_as_pointer(ofreelistdata);
-	rv = freelistdata->freelist;
-	if(rv == 0) {
-		rv = Orb_gc_malloc(TLS_BATCH_ALLOC * sizeof(struct Orb_tls_s));
+	if(tls_size == 0) {
+		/*need to refill*/
+		if(tls_capacity < TLS_BATCH_ALLOC) {
+			free(tls_freelist);
+			free(tls_versions);
+			tls_freelist = malloc(TLS_BATCH_ALLOC * sizeof(size_t));
+			tls_versions = malloc(TLS_BATCH_ALLOC * sizeof(size_t));
+		}
 		size_t i;
-		size_t maxindex = freelistdata->maxindex;
-		/*set up structures*/
 		for(i = 0; i < TLS_BATCH_ALLOC; ++i) {
-			rv[i].index = maxindex + i;
+			/*fill indices in reverse because the freelist is
+			used as a stack that grows upward.
+			*/
+			tls_freelist[i] = tls_maxindex + TLS_BATCH_ALLOC - i - 1;
+			tls_versions[i] = 1;
 		}
-		/*set up list structure*/
-		for(i = 0; i < TLS_BATCH_ALLOC - 1; ++i) {
-			rv[i].next = &rv[i + 1];
-		}
-		nfreelistdata->maxindex = maxindex + TLS_BATCH_ALLOC;
-	} else {
-		nfreelistdata->maxindex = freelistdata->maxindex;
-	}
-	nfreelistdata->freelist = rv->next;
-	check = Orb_cell_cas_get(freelistcell, ofreelistdata, onfreelistdata);
-	if(check != ofreelistdata) {
-		ofreelistdata = check;
-		goto top;
+		tls_maxindex += TLS_BATCH_ALLOC;
+		tls_size = TLS_BATCH_ALLOC;
 	}
 
-	rv->next = 0;
+	rv_index = tls_freelist[tls_size - 1];
+	rv_version = tls_versions[tls_size - 1];
+	--tls_size;
+
+	/*unlock *before* allocing
+	The tls_freelist_lock is acquired by the finalizer for
+	Orb_tls_t.  These finalizers might be called while the
+	GC has acquired its own allocation lock, so we have
+	to free the tls_freelist_lock to prevent deadlocks with
+	the GC's lock.
+	*/
+	pthread_mutex_unlock(&tls_freelist_lock);
+
+	/*alloc a new Orb_tls_t*/
+	Orb_tls_t rv = Orb_gc_malloc(sizeof(struct Orb_tls_s));
+	rv->index = rv_index;
+	rv->version = rv_version;
+	/*setup finalizer*/
 	Orb_gc_deffinalizer(rv, &individual_tls_finalizer, 0);
 
 	return rv;
 }
 
 static void individual_tls_finalizer(void* vptls, void* _ignored_) {
-	Orb_tls_t tls = vptls;
+	/*TODO: consider blocking signals*/
+	pthread_mutex_lock(&tls_freelist_lock);
 
-	Orb_cell_t freelistcell = Orb_t_as_pointer(the_tls_freelist);
-	Orb_t ofreelistdata = Orb_cell_get(freelistcell);
-
-	struct tls_freelist_s* nfreelistdata = Orb_gc_malloc(
-		sizeof(struct tls_freelist_s)
-	);
-	Orb_t onfreelistdata = Orb_t_from_pointer(nfreelistdata);
-
-	struct tls_freelist_s* freelistdata;
-	Orb_t check;
-
-top:
-	freelistdata = Orb_t_as_pointer(ofreelistdata);
-
-	tls->next = freelistdata->freelist;
-
-	nfreelistdata->freelist = tls;
-	nfreelistdata->maxindex = freelistdata->maxindex;
-
-	check = Orb_cell_cas_get(freelistcell, ofreelistdata, onfreelistdata);
-	if(check != ofreelistdata) {
-		ofreelistdata = check;
-		goto top;
+	/*check if full to capacity*/
+	if(tls_size == tls_capacity) {
+		/*realloc*/
+		size_t ncapacity = tls_capacity + TLS_BATCH_ALLOC;
+		size_t* nfreelist = malloc(ncapacity * sizeof(size_t));
+		size_t* nversions = malloc(ncapacity * sizeof(size_t));
+		memcpy(nfreelist, tls_freelist, tls_capacity * sizeof(size_t));
+		memcpy(nversions, tls_versions, tls_capacity * sizeof(size_t));
+		tls_freelist = nfreelist;
+		tls_versions = nversions;
+		tls_capacity = ncapacity;
 	}
+
+	Orb_tls_t tls = vptls;
+	tls_freelist[tls_size] = tls->index;
+	tls_versions[tls_size] = tls->version + 1; /*increment version*/
+	++tls_size;
+
+	pthread_mutex_unlock(&tls_freelist_lock);
 }
 
+/*
+ * Called when a thread terminates and needs to clean up its
+ * thread-local slots
+ */
 static void thread_local_cleanup(void* tlsdata) {
 	/*undefine from globality*/
 	if(tlsdata) {
@@ -200,19 +225,6 @@ static void tls_init(void) {
 		fprintf(stderr, "Unable to initialize thread-locals");
 		exit(1);
 	}
-
-	Orb_gc_defglobal(&the_tls_freelist);
-
-	struct tls_freelist_s* nfreelist = Orb_gc_malloc(
-		sizeof(struct tls_freelist_s)
-	);
-	nfreelist->freelist = 0;
-	nfreelist->maxindex = 0;
-
-	Orb_cell_t freelistcell = Orb_cell_init(
-		Orb_t_from_pointer(nfreelist)
-	);
-	the_tls_freelist = Orb_t_from_pointer(freelistcell);
 }
 
 
@@ -287,6 +299,7 @@ void Orb_sema_post(Orb_sema_t sema) {
 		size_t i = (size_t) loc;
 		i = i >> 4;
 		i = i % N_CAS_MUTEXES;
+		/*TODO: consider blocking signals*/
 		pthread_mutex_lock(&cas_mutexes[i]);
 		Orb_t curv = *loc;
 		if(curv == old) *loc = newval;
