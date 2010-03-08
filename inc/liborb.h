@@ -186,13 +186,15 @@ Orb_TRY(E) {
 #include<setjmp.h>
 
 struct Orb_priv_eh_s;
-#define Orb_TRY(E)\
-	do { struct Orb_priv_eh_s* E;\
-		if(!setjmp(Orb_priv_eh_init(&E)))
+#define Orb_TRY\
+	do { struct Orb_priv_eh_s* Orb_priv_eh_dat;\
+		if(!setjmp(Orb_priv_eh_init(&Orb_priv_eh_dat)))
 #define Orb_CATCH(E)\
-	else
+	else {\
+		struct Orb_priv_eh_s* E = Orb_priv_eh_dat;\
+		do
 #define Orb_ENDTRY\
-	} while(0);
+	while(0); } while(0);
 
 void* Orb_priv_eh_init(struct Orb_priv_eh_s**);
 void Orb_THROW(Orb_t, Orb_t);
