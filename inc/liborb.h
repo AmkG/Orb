@@ -207,7 +207,7 @@ void Orb_THROW_cc(char const*, char const*);
 
 Orb_t Orb_E_TYPE(struct Orb_priv_eh_s*);
 Orb_t Orb_E_VALUE(struct Orb_priv_eh_s*);
-Orb_t Orb_E_RETHROW(struct Orb_priv_eh_s*);
+void Orb_E_RETHROW(struct Orb_priv_eh_s*);
 
 /*object construction*/
 /*
