@@ -188,15 +188,20 @@ Orb_TRY(E) {
 struct Orb_priv_eh_s;
 #define Orb_TRY\
 	do { struct Orb_priv_eh_s* Orb_priv_eh_dat;\
-		if(!setjmp(Orb_priv_eh_init(&Orb_priv_eh_dat)))
+		if(!setjmp(Orb_priv_eh_init(&Orb_priv_eh_dat))) {\
+			do
 #define Orb_CATCH(E)\
-	else {\
-		struct Orb_priv_eh_s* E = Orb_priv_eh_dat;\
-		do
+			while(0);\
+			Orb_priv_eh_end(Orb_priv_eh_dat)\
+		} else {\
+			struct Orb_priv_eh_s* E = Orb_priv_eh_dat;\
+			do
 #define Orb_ENDTRY\
-	while(0); } while(0);
+		while(0); }\
+	while(0);
 
 void* Orb_priv_eh_init(struct Orb_priv_eh_s**);
+void Orb_priv_eh_end(struct Orb_priv_eh_s*);
 void Orb_THROW(Orb_t, Orb_t);
 void Orb_THROW_cc(char const*, char const*);
 
