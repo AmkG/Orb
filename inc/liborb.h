@@ -198,7 +198,7 @@ struct Orb_priv_eh_s;
 			do
 #define Orb_ENDTRY\
 		while(0); }\
-	while(0);
+	} while(0);
 
 void* Orb_priv_eh_init(struct Orb_priv_eh_s**);
 void Orb_priv_eh_end(struct Orb_priv_eh_s*);
