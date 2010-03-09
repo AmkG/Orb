@@ -219,7 +219,7 @@ Orb_BUILDER {
 */
 struct Orb_priv_ob_s;
 #define Orb_BUILDER\
-	do { struct Orb_priv_ob_s* Orb_priv_ob = Orb_priv_ob_start();\
+	do { struct Orb_priv_ob_s* Orb_priv_ob = Orb_priv_ob_start();
 #define Orb_B_PARENT(v)\
 		Orb_priv_ob_parent(Orb_priv_ob, v)
 #define Orb_B_FIELD_AS_IF_VIRTUAL(f, v)\
@@ -237,7 +237,7 @@ struct Orb_priv_ob_s* Orb_priv_ob_start(void);
 void Orb_priv_ob_parent(struct Orb_priv_ob_s*, Orb_t);
 void Orb_priv_ob_field_as_if_virtual(struct Orb_priv_ob_s*, Orb_t, Orb_t);
 void Orb_priv_ob_field(struct Orb_priv_ob_s*, Orb_t, Orb_t);
-void Orb_priv_ob_build(struct Orb_priv_ob_s*);
+Orb_t Orb_priv_ob_build(struct Orb_priv_ob_s*);
 
 #ifdef __cplusplus
 }
