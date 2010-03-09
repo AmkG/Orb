@@ -8,6 +8,7 @@ liborb_la_SOURCES =\
 	thread-support.c\
 	symbol.c\
 	gc.c\
-	exception.c
+	exception.c\
+	bs-tree.c
 liborb_la_LDFLAGS = -module
 
