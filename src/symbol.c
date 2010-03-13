@@ -168,7 +168,7 @@ void Orb_symbol_init(void) {
 	Orb_BUILDER {
 		Orb_B_PARENT(Orb_OBJECT);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("write",
-			Orb_t_from_cfunc(&sym_write)
+			Orb_method(Orb_t_from_cfunc(&sym_write))
 		);
 		/*TODO: fill in fields*/
 	} Orb_actual_symbolbase = Orb_ENDBUILDER;
