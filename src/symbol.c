@@ -86,7 +86,7 @@ Orb_t Orb_symbol_sz(char const* string, size_t len) {
 
 Orb_t Orb_symbol(char const* string) {
 	size_t i;
-	for(i = 0; *string[i]; ++i) { }
+	for(i = 0; string[i]; ++i) { }
 	return Orb_symbol_sz(string, i);
 }
 
@@ -126,8 +126,27 @@ Orb_t Orb_symbol_cc(char const* str) {
 	return rv->symbol;
 }
 
+/*method:fn (self @prc @prs @pro)*/
 static Orb_t sym_write(Orb_t argv[], size_t* pargc, size_t argl) {
-	/**/
+	/*verify size*/
+	if(*pargc != 5) Orb_THROW_cc("apply", "incorrect number of arguments to writer");
+
+	Orb_t self = argv[1];
+	Orb_t prc = argv[2];
+	Orb_t prs = argv[3];
+	Orb_t pro = argv[4];
+
+	Orb_t opstring = Orb_deref(self, str_field);
+	char const* pstring = Orb_t_as_pointer(opstring);
+	Orb_t olen = Orb_deref(self, len_field);
+	size_t len = Orb_t_as_integer(olen);
+
+	/*TODO: decode UTF-8 properly*/
+	size_t i;
+	for(i = 0; i < len; ++i, ++pstring) {
+		Orb_call1(prc, Orb_t_from_integer(*pstring));
+	}
+	return Orb_NIL;
 }
 
 void Orb_symbol_init(void) {
