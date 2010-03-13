@@ -91,6 +91,13 @@ Orb_t Orb_t_from_cf0(Orb_t (*cf)(void));
 Orb_t Orb_t_from_cf1(Orb_t (*cf)(Orb_t));
 Orb_t Orb_t_from_cf2(Orb_t (*cf)(Orb_t, Orb_t));
 Orb_t Orb_t_from_cf3(Orb_t (*cf)(Orb_t, Orb_t, Orb_t));
+Orb_t Orb_t_from_cfv(Orb_t (*cf)(Orb_t*, size_t));
+
+/*low-level cfunc*/
+typedef Orb_t Orb_cfunc_f(Orb_t argv[], size_t* pargc, size_t argl);
+typedef Orb_cfunc_f* Orb_cfunc;
+
+Orb_t Orb_t_from_cfunc(Orb_cfunc);
 
 /*garbage collector*/
 
