@@ -52,33 +52,6 @@ static int str_compare(void* vpa, void* vpb) {
 	}
 	return 0;
 }
-static int sym_compare(void* vpa, void* vpb) {
-	pair_t a = vpa;
-	pair_t b = vpb;
-	if(a->symbol < b->symbol) return -1;
-	else if(a->symbol > b->symbol) return 1;
-	else return 0;
-}
-
-void Orb_symbol_init(void) {
-	Orb_gc_defglobal(&str_to_sym);
-	Orb_gc_defglobal(&str_field);
-	Orb_gc_defglobal(&len_field);
-	Orb_gc_defglobal(&Orb_SYMBOLBASE);
-	Orb_gc_defglobal(&Orb_actual_symbolbase);
-
-	Orb_SYMBOLBASE = Orb_t_from_pointer(Orb_gc_malloc(1));
-	str_field = Orb_t_from_pointer(Orb_gc_malloc(1));
-	len_field = Orb_t_from_pointer(Orb_gc_malloc(1));
-
-	/*intialize map*/
-	str_to_sym = Orb_t_from_pointer(Orb_bs_tree_init(&str_compare));
-
-	Orb_BUILDER {
-		Orb_B_PARENT(Orb_NOTFOUND);
-		/*TODO: fill in fields*/
-	} Orb_actual_symbolbase = Orb_ENDBUILDER;
-}
 
 Orb_t Orb_symbol_sz(char const* string, size_t len) {
 	struct pair_s tmp;
@@ -111,4 +84,71 @@ Orb_t Orb_symbol_sz(char const* string, size_t len) {
 	}
 }
 
+Orb_t Orb_symbol(char const* string) {
+	size_t i;
+	for(i = 0; *string[i]; ++i) { }
+	return Orb_symbol_sz(string, i);
+}
+
+struct cc_pair_s  {
+	char const* string;
+	Orb_t symbol;
+};
+typedef struct cc_pair_s* cc_pair_t;
+
+/*constant C string-to-symbol tree*/
+static Orb_t cc_str_to_sym;
+
+static int cc_str_compare(void* vpa, void* vpb) {
+	cc_pair_t a = vpa; cc_pair_t b = vpb;
+	if(a->string < b->string) return -1;
+	else if(a->string > b->string) return 1;
+	else return 0;
+}
+
+Orb_t Orb_symbol_cc(char const* str) {
+	Orb_bs_tree_t cc_tree = Orb_t_as_pointer(cc_str_to_sym);
+
+	struct cc_pair_s tmp;
+	tmp.string = str;
+
+	cc_pair_t rv = Orb_bs_tree_lookup(cc_tree, &tmp);
+	if(rv == 0) {
+		rv = Orb_gc_malloc(sizeof(struct cc_pair_s));
+		rv->string = str;
+		Orb_t srv = Orb_symbol(str);
+		rv->symbol = srv;
+		if(Orb_bs_tree_insert(cc_tree, rv) != rv) {
+			Orb_gc_free(rv);
+		}
+		return srv;
+	}
+	return rv->symbol;
+}
+
+static Orb_t sym_write(Orb_t argv[], size_t* pargc, size_t argl) {
+	/**/
+}
+
+void Orb_symbol_init(void) {
+	Orb_gc_defglobal(&str_to_sym);
+	Orb_gc_defglobal(&cc_str_to_sym);
+	Orb_gc_defglobal(&str_field);
+	Orb_gc_defglobal(&len_field);
+	Orb_gc_defglobal(&Orb_SYMBOLBASE);
+	Orb_gc_defglobal(&Orb_actual_symbolbase);
+
+	Orb_SYMBOLBASE = Orb_t_from_pointer(Orb_gc_malloc(1));
+	str_field = Orb_t_from_pointer(Orb_gc_malloc(1));
+	len_field = Orb_t_from_pointer(Orb_gc_malloc(1));
+
+	/*intialize map*/
+	str_to_sym = Orb_t_from_pointer(Orb_bs_tree_init(&str_compare));
+	cc_str_to_sym = Orb_t_from_pointer(Orb_bs_tree_init(&cc_str_compare));
+
+	Orb_BUILDER {
+		Orb_B_PARENT(Orb_OBJECT);
+		/*TODO: fill in fields*/
+	} Orb_actual_symbolbase = Orb_ENDBUILDER;
+}
 
