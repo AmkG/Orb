@@ -246,6 +246,10 @@ void Orb_priv_ob_field_as_if_virtual(struct Orb_priv_ob_s*, Orb_t, Orb_t);
 void Orb_priv_ob_field(struct Orb_priv_ob_s*, Orb_t, Orb_t);
 Orb_t Orb_priv_ob_build(struct Orb_priv_ob_s*);
 
+Orb_t Orb_virtual(Orb_t);
+Orb_t Orb_virtual_x(void);
+Orb_t Orb_method(Orb_t);
+
 #ifdef __cplusplus
 }
 #endif
