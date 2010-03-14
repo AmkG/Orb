@@ -43,7 +43,7 @@ Orb_t Orb_bless_safety(Orb_t f, size_t safety) {
 	Orb_BUILDER {
 		Orb_B_PARENT(f);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("**orbsafety**",
-			Orb_t_from_integer(safety);
+			Orb_t_from_integer(safety)
 		);
 	} return Orb_ENDBUILDER;
 }

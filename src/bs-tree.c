@@ -43,7 +43,7 @@ static node_t node_ctor(void* p, node_t l, node_t r) {
 	n->r = r;
 }
 
-static node_t node_inserted(node_t n, void* p, Orb_bs_tree_comparer cf, void** found) {
+static node_t node_inserted(node_t n, void* p, Orb_bs_tree_comparer_t cf, void** found) {
 	if(n == 0) {
 		return node_ctor(p, 0, 0);
 	}
@@ -75,7 +75,7 @@ top:
 		return found;
 	} else {
 		Orb_t ocheck = Orb_cell_cas_get(tree->cell, on,
-			Orb_t_from_pointer(new_n);
+			Orb_t_from_pointer(new_n)
 		);
 		if(ocheck != on) {
 			on = ocheck;

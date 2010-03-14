@@ -61,6 +61,6 @@ void Orb_THROW(Orb_t type, Orb_t value) {
 
 Orb_t Orb_E_TYPE(struct Orb_priv_eh_s* E) { return E->type; }
 Orb_t Orb_E_VALUE(struct Orb_priv_eh_s* E) { return E->type; }
-Orb_t Orb_E_RETHROW(struct Orb_priv_eh_s* E) { Orb_THROW(E->type, E->value); }
+void Orb_E_RETHROW(struct Orb_priv_eh_s* E) { Orb_THROW(E->type, E->value); }
 
 
