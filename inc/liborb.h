@@ -71,6 +71,10 @@ extern Orb_t Orb_OBJECT;
 
 Orb_t Orb_call(Orb_t argv[], size_t argc);
 
+#define Orb_SAFE(x) (((size_t) (1)) << ((x) - 1))
+void Orb_safetycheck(Orb_t, size_t);
+Orb_t Orb_bless_safety(Orb_t, size_t);
+
 static inline Orb_t Orb_call0(Orb_t f) {
 	return Orb_call(&f, 1);
 }
@@ -98,6 +102,11 @@ typedef Orb_t Orb_cfunc_f(Orb_t argv[], size_t* pargc, size_t argl);
 typedef Orb_cfunc_f* Orb_cfunc;
 
 Orb_t Orb_t_from_cfunc(Orb_cfunc);
+
+/*value that may be returned by a cfunc
+to specify a tail call
+*/
+extern Orb_t Orb_TRAMPOLINE;
 
 /*garbage collector*/
 
