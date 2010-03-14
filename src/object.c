@@ -2,6 +2,7 @@
 #include"liborb.h"
 #include"object.h"
 #include"symbol.h"
+#include"bs-tree.h"
 
 #include<string.h>
 
@@ -220,7 +221,7 @@ bound method:
 
 struct Orb_priv_ob_s* Orb_priv_ob_start(void) {
 	struct Orb_priv_ob_s* rv = Orb_gc_malloc(sizeof(struct Orb_priv_ob_s));
-	rv->format = 0;
+	rv->fields = 0;
 	rv->values = 0;
 	rv->size = 0;
 	rv->capacity = 0;
@@ -353,7 +354,7 @@ top:
 		Orb_t* parent_a = Orb_t_as_pointer(parent);
 		Orb_t* parent_format = Orb_t_as_pointer(parent_a[0]);
 		size_t N = Orb_t_as_integer(parent_format[0]);
-		pchildformats = *parent_a[N+1];
+		pchildformats = &parent_a[N+1];
 		parent_is_object = 1;
 	}
 
@@ -481,7 +482,7 @@ top:
 	if(found) {
 		return a[1+index];
 	}
-	parent = format[N+1];
+	parent = format[numfields+1];
 	if(parent == Orb_NOTFOUND) return Orb_NOTFOUND;
 	obj = parent; goto top;
 }
@@ -557,15 +558,15 @@ Orb_t Orb_ref(Orb_t obj, Orb_t field) {
 		/*construct the bound method*/
 		Orb_BUILDER {
 			Orb_B_PARENT(b_bound_method);
-			Orb_B_FIELD_AS_IF_VIRTUAL("**this**",
+			Orb_B_FIELD_AS_IF_VIRTUAL_cc("**this**",
 				obj
 			);
-			Orb_B_FIELD_AS_IF_VIRTUAL("**unbound-function**",
+			Orb_B_FIELD_AS_IF_VIRTUAL_cc("**unbound-function**",
 				check
 			);
 			check = Orb_deref_cc(val, "**orbsafety**");
 			if(Orb_t_is_integer(check)) {
-				Orb_B_FIELD_AS_IF_VIRTUAL("**orbsafety**",
+				Orb_B_FIELD_AS_IF_VIRTUAL_cc("**orbsafety**",
 					check
 				);
 			}
@@ -574,7 +575,7 @@ Orb_t Orb_ref(Orb_t obj, Orb_t field) {
 	return val;
 }
 
-static Orb_t bound_function_invoke(Orb_t argv[], size_t* pargc, size_t argl) {
+static Orb_t bound_method_invoke(Orb_t argv[], size_t* pargc, size_t argl) {
 	/*extract objects*/
 	Orb_t self = argv[0];
 	Orb_t this = Orb_deref_cc(self, "**this**");
