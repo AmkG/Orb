@@ -336,7 +336,7 @@ Orb_cell_t Orb_cell_init(Orb_t init) {
 	the only cycles that can be formed just from standard
 	Orb.
 	*/
-	Orb_autoclear_on_finalize(rv, &rv->core);
+	Orb_gc_autoclear_on_finalize(rv, &rv->core);
 	return rv;
 }
 Orb_t Orb_cell_get(Orb_cell_t c) {
