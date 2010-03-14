@@ -57,7 +57,12 @@ void Orb_THROW(Orb_t type, Orb_t value) {
 	longjmp(current_eh->jmpto, 1);
 }
 
-/*TODO: Orb_THROW_cc*/
+void Orb_THROW_cc(char const* type, char const* value) {
+	Orb_THROW(
+		Orb_symbol_cc(type),
+		Orb_NIL /*TODO: convert value to Orb string*/
+	);
+}
 
 Orb_t Orb_E_TYPE(struct Orb_priv_eh_s* E) { return E->type; }
 Orb_t Orb_E_VALUE(struct Orb_priv_eh_s* E) { return E->type; }
