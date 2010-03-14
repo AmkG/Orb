@@ -22,8 +22,12 @@ Orb_t Orb_actual_symbolbase;
 static Orb_t new_symbol(char const* string, size_t len) {
 	Orb_BUILDER {
 		Orb_B_PARENT(Orb_SYMBOLBASE);
-		Orb_B_FIELD(str_field, Orb_t_from_pointer((void*)string));
-		Orb_B_FIELD(len_field, Orb_t_from_integer(len));
+		Orb_B_FIELD_AS_IF_VIRTUAL(str_field,
+			Orb_t_from_pointer((void*)string)
+		);
+		Orb_B_FIELD_AS_IF_VIRTUAL(len_field,
+			Orb_t_from_integer(len)
+		);
 	} return Orb_ENDBUILDER;
 }
 
