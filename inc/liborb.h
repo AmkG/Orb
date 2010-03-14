@@ -61,7 +61,7 @@ static inline Orb_t Orb_ref_cc(Orb_t v, char const* str) {
 }
 Orb_t Orb_deref(Orb_t, Orb_t);
 static inline Orb_t Orb_deref_cc(Orb_t v, char const* str) {
-	return Orb_rdeef(v, Orb_symbol_cc(str));
+	return Orb_deref(v, Orb_symbol_cc(str));
 }
 
 extern Orb_t Orb_NIL;
