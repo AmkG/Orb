@@ -9,6 +9,7 @@ liborb_la_SOURCES =\
 	symbol.c\
 	gc.c\
 	exception.c\
-	bs-tree.c
+	bs-tree.c\
+	object.c
 liborb_la_LDFLAGS = -module
 
