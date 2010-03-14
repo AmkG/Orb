@@ -69,7 +69,10 @@ extern Orb_t Orb_TRUE;
 extern Orb_t Orb_NOTFOUND;
 extern Orb_t Orb_OBJECT;
 
-Orb_t Orb_call(Orb_t argv[], size_t argc);
+Orb_t Orb_call_ex(Orb_t argv[], size_t argc, size_t argl);
+static inline Orb_t Orb_call(Orb_t argv[], size_t argc) {
+	return Orb_call_ex(argv, argc, argc);
+}
 
 #define Orb_SAFE(x) (((size_t) (1)) << ((x) - 1))
 void Orb_safetycheck(Orb_t, size_t);

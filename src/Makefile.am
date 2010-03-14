@@ -11,6 +11,7 @@ liborb_la_SOURCES =\
 	exception.c\
 	bs-tree.c\
 	object.c\
-	init.c
+	init.c\
+	call.c
 liborb_la_LDFLAGS = -module
 
