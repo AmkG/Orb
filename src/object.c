@@ -65,6 +65,7 @@ Orb_t Orb_t_from_cfunc(Orb_cfunc f) {
 			Orb_t_from_pointer(pf)
 		);
 	} rv = Orb_ENDBUILDER;
+	return rv;
 }
 
 static Orb_t falseif(Orb_t argv[], size_t* pargc, size_t argl) {

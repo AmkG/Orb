@@ -41,6 +41,7 @@ static node_t node_ctor(void* p, node_t l, node_t r) {
 	n->p = p;
 	n->l = l;
 	n->r = r;
+	return n;
 }
 
 static node_t node_inserted(node_t n, void* p, Orb_bs_tree_comparer_t cf, void** found) {
