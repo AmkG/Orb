@@ -7,7 +7,11 @@
 void Orb_gc_only_init(void) {
 	GC_INIT();
 	GC_all_interior_pointers = 0;
+
+	/*need to register each possible displacement*/
 	GC_REGISTER_DISPLACEMENT(3);
+	GC_REGISTER_DISPLACEMENT(2);
+	GC_REGISTER_DISPLACEMENT(1);
 }
 
 void* Orb_gc_malloc(size_t sz) {
