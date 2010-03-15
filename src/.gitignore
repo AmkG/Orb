@@ -2,4 +2,5 @@
 orb
 *.a
 *.so
+check-symbols
 

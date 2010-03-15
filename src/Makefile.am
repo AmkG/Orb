@@ -3,6 +3,8 @@ LIBS=@LIBS@
 CFLAGS=@CFLAGS@
 CC=@CC@
 
+AM_LDFLAGS = -lgc
+
 lib_LTLIBRARIES = liborb.la
 liborb_la_SOURCES =\
 	thread-support.c\
@@ -14,4 +16,12 @@ liborb_la_SOURCES =\
 	init.c\
 	call.c
 liborb_la_LDFLAGS = -module
+
+check_PROGRAMS = check-symbols
+check_symbols_SOURCES =\
+	check-symbols.c
+check_symbols_LDADD = liborb.la
+check_symbols_LDFLAGS = -static
+
+TESTS = check-symbols
 
