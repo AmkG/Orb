@@ -164,6 +164,9 @@ void Orb_gc_autoclear_on_finalize(
 	void** area_pointer
 );
 
+/*trigger a GC*/
+void Orb_gc_trigger(void);
+
 void Orb_post_gc_init(int argc, char* argv[]);
 void Orb_gc_only_init(void);
 static inline void Orb_init(int argc, char* argv[]) {

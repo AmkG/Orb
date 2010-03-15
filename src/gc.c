@@ -64,3 +64,7 @@ void Orb_gc_autoclear_on_finalize(void* area, void** area_pointer) {
 	);
 }
 
+void Orb_gc_trigger(void) {
+	GC_gcollect();
+}
+
