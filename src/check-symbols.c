@@ -30,6 +30,17 @@ int main(void) {
 	Orb_t x = Orb_symbol("hello");
 	Orb_t y = Orb_symbol_cc("hello");
 	assert(x == y);
+	Orb_gc_trigger();
+	Orb_t z = Orb_symbol_cc("goodbye");
+	Orb_gc_trigger();
+	Orb_t w = Orb_symbol("goodbye");
+	assert(z == w);
+	assert(x != z);
+
+	Orb_t xw = Orb_deref_cc(x, "write");
+	Orb_t zw = Orb_deref_cc(z, "write");
+	assert(zw == xw);
+
 	return 0;
 }
 
