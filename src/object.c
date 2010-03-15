@@ -514,6 +514,17 @@ Orb_t Orb_method(Orb_t orig) {
 		}
 	} return Orb_ENDBUILDER;
 }
+Orb_t Orb_method_assured(Orb_t orig) {
+	Orb_BUILDER {
+		Orb_B_PARENT(Orb_NOTFOUND);
+		Orb_B_FIELD_AS_IF_VIRTUAL_cc("**is-unbound-method**",
+			Orb_TRUE
+		);
+		Orb_B_FIELD_AS_IF_VIRTUAL_cc("**unbound-function**",
+			orig
+		);
+	} return Orb_ENDBUILDER;
+}
 
 Orb_t Orb_virtual(Orb_t orig) {
 	Orb_BUILDER {
