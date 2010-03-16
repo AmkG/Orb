@@ -99,8 +99,8 @@ MAKE_WRITE(write_notfound, "notfound") /*#x*/
 static Orb_t bound_method_invoke(Orb_t argv[], size_t* pargc, size_t argl);
 
 void Orb_object_init_after_symbol(void) {
-	Orb_t ofalseif = Orb_t_from_cfunc(&falseif);
-	Orb_t otrueif = Orb_t_from_cfunc(&trueif);
+	Orb_t ofalseif = Orb_bless_safety(Orb_t_from_cfunc(&falseif));
+	Orb_t otrueif = Orb_bless_safety(Orb_t_from_cfunc(&trueif));
 
 	Orb_gc_defglobal(&bnil);
 	Orb_gc_defglobal(&btrue);
@@ -114,21 +114,30 @@ void Orb_object_init_after_symbol(void) {
 		Orb_B_PARENT(Orb_NOTFOUND);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("if", ofalseif);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("write",
-			Orb_t_from_cfunc(&write_nil)
+			Orb_bless_safety(
+				Orb_t_from_cfunc(&write_nil),
+				Orb_SAFE(1) | Orb_SAFE(2) | Orb_SAFE(3)
+			)
 		);
 	} bnil = Orb_ENDBUILDER;
 	Orb_BUILDER {
 		Orb_B_PARENT(Orb_NOTFOUND);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("if", otrueif);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("write",
-			Orb_t_from_cfunc(&write_true)
+			Orb_bless_safety(
+				Orb_t_from_cfunc(&write_true),
+				Orb_SAFE(1) | Orb_SAFE(2) | Orb_SAFE(3)
+			)
 		);
 	} btrue = Orb_ENDBUILDER;
 	Orb_BUILDER {
 		Orb_B_PARENT(Orb_NOTFOUND);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("if", ofalseif);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("write",
-			Orb_t_from_cfunc(&write_notfound)
+			Orb_bless_safety(
+				Orb_t_from_cfunc(&write_notfound),
+				Orb_SAFE(1) | Orb_SAFE(2) | Orb_SAFE(3)
+			)
 		);
 	} bnotfound = Orb_ENDBUILDER;
 	Orb_BUILDER {

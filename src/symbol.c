@@ -172,7 +172,12 @@ void Orb_symbol_init(void) {
 	Orb_BUILDER {
 		Orb_B_PARENT(Orb_OBJECT);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("write",
-			Orb_method_assured(Orb_t_from_cfunc(&sym_write))
+			Orb_bless_safety(
+				Orb_method_assured(
+					Orb_t_from_cfunc(&sym_write)
+				),
+				Orb_SAFE(1) | Orb_SAFE(2) | Orb_SAFE(3)
+			)
 		);
 		/*TODO: fill in fields*/
 	} Orb_actual_symbolbase = Orb_ENDBUILDER;
