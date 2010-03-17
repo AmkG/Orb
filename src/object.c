@@ -99,8 +99,12 @@ MAKE_WRITE(write_notfound, "notfound") /*#x*/
 static Orb_t bound_method_invoke(Orb_t argv[], size_t* pargc, size_t argl);
 
 void Orb_object_init_after_symbol(void) {
-	Orb_t ofalseif = Orb_bless_safety(Orb_t_from_cfunc(&falseif));
-	Orb_t otrueif = Orb_bless_safety(Orb_t_from_cfunc(&trueif));
+	Orb_t ofalseif = Orb_bless_safety(Orb_t_from_cfunc(&falseif),
+		Orb_SAFE(1) | Orb_SAFE(2)
+	);
+	Orb_t otrueif = Orb_bless_safety(Orb_t_from_cfunc(&trueif),
+		Orb_SAFE(1) | Orb_SAFE(2)
+	);
 
 	Orb_gc_defglobal(&bnil);
 	Orb_gc_defglobal(&btrue);
