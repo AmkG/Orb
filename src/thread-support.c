@@ -133,11 +133,35 @@ static size_t tls_maxindex = 0;
 
 static void individual_tls_finalizer(void*, void*);
 
+/*
+ * Signal blocking facility
+ *
+ * In POSIX systems, Boehm GC uses signals to stop the world.
+ * In many cases we don't want the GC to stop the world while
+ * we are doing something, like holding a lock that a signal
+ * handler might use.
+ */
+#define BLOCK_SIGNALS_DECL sigset_t Orb__priv_oldmask
+#define BLOCK_SIGNALS\
+	do {\
+		sigset_t curmask;\
+		sigfillset(&curmask);\
+		/* Don't block SIGSEGV and SIGBUS*/ \
+		sigdelset(&curmask, SIGSEGV);\
+		sigdelset(&curmask, SIGBUS);\
+		pthread_sigmask(SIG_BLOCK, &curmask, &Orb__priv_oldmask);\
+	} while(0)
+#define UNBLOCK_SIGNALS\
+	do {\
+		pthread_sigmask(SIG_SETMASK, &Orb__priv_oldmask, 0);\
+	} while(0)
+
 Orb_tls_t Orb_tls_init(void) {
 	size_t rv_index;
 	size_t rv_version;
+	BLOCK_SIGNALS_DECL;
 
-	/*TODO: consider blocking signals*/
+	BLOCK_SIGNALS;
 	pthread_mutex_lock(&tls_freelist_lock);
 
 	if(tls_size == 0) {
@@ -147,6 +171,15 @@ Orb_tls_t Orb_tls_init(void) {
 			free(tls_versions);
 			tls_freelist = malloc(TLS_BATCH_ALLOC * sizeof(size_t));
 			tls_versions = malloc(TLS_BATCH_ALLOC * sizeof(size_t));
+			if(tls_freelist == 0 || tls_versions == 0) {
+				free(tls_freelist); free(tls_versions);
+				tls_freelist = 0; tls_versions = 0;
+
+				/*unlock and unblock*/
+				pthread_mutex_unlock(&tls_freelist_lock);
+				UNBLOCK_SIGNALS;
+				Orb_THROW_cc("new-tls", "Out of memory");
+			}
 		}
 		size_t i;
 		for(i = 0; i < TLS_BATCH_ALLOC; ++i) {
@@ -172,6 +205,7 @@ Orb_tls_t Orb_tls_init(void) {
 	the GC's lock.
 	*/
 	pthread_mutex_unlock(&tls_freelist_lock);
+	UNBLOCK_SIGNALS;
 
 	/*alloc a new Orb_tls_t*/
 	Orb_tls_t rv = Orb_gc_malloc(sizeof(struct Orb_tls_s));
@@ -184,7 +218,9 @@ Orb_tls_t Orb_tls_init(void) {
 }
 
 static void individual_tls_finalizer(void* vptls, void* _ignored_) {
-	/*TODO: consider blocking signals*/
+	BLOCK_SIGNALS_DECL;
+
+	BLOCK_SIGNALS;
 	pthread_mutex_lock(&tls_freelist_lock);
 
 	/*check if full to capacity*/
@@ -193,8 +229,18 @@ static void individual_tls_finalizer(void* vptls, void* _ignored_) {
 		size_t ncapacity = tls_capacity + TLS_BATCH_ALLOC;
 		size_t* nfreelist = malloc(ncapacity * sizeof(size_t));
 		size_t* nversions = malloc(ncapacity * sizeof(size_t));
+		if(nfreelist == 0 || nversions == 0) {
+			/*just let this index number drop T.T*/
+			free(tls_freelist);
+			free(tls_versions);
+			goto end;
+		}
 		memcpy(nfreelist, tls_freelist, tls_capacity * sizeof(size_t));
 		memcpy(nversions, tls_versions, tls_capacity * sizeof(size_t));
+
+		free(tls_freelist);
+		free(tls_versions);
+
 		tls_freelist = nfreelist;
 		tls_versions = nversions;
 		tls_capacity = ncapacity;
@@ -205,7 +251,9 @@ static void individual_tls_finalizer(void* vptls, void* _ignored_) {
 	tls_versions[tls_size] = tls->version + 1; /*increment version*/
 	++tls_size;
 
+end:
 	pthread_mutex_unlock(&tls_freelist_lock);
+	UNBLOCK_SIGNALS;
 }
 
 /*
@@ -296,23 +344,36 @@ void Orb_sema_post(Orb_sema_t sema) {
 	}
 
 	static Orb_t cas(Orb_t* loc, Orb_t old, Orb_t newval) {
+		BLOCK_SIGNALS_DECL;
 		size_t i = (size_t) loc;
 		i = i >> 4;
 		i = i % N_CAS_MUTEXES;
-		/*TODO: consider blocking signals*/
+
+		BLOCK_SIGNALS;
 		pthread_mutex_lock(&cas_mutexes[i]);
+
 		Orb_t curv = *loc;
 		if(curv == old) *loc = newval;
+
 		pthread_mutex_unlock(&cas_mutexes[i]);
+		UNBLOCK_SIGNALS;
+
 		return curv;
 	}
 	static Orb_t safe_read(Orb_t* loc) {
+		BLOCK_SIGNALS_DECL;
 		size_t i = (size_t) loc;
 		i = i >> 4;
 		i = i % N_CAS_MUTEXES;
+
+		BLOCK_SIGNALS;
 		pthread_mutex_lock(&cas_mutexes[i]);
+
 		Orb_t curv = *loc;
+
 		pthread_mutex_unlock(&cas_mutexes[i]);
+		UNBLOCK_SIGNALS;
+
 		return curv;
 	}
 #endif /*not HAVE_SOME_CAS*/
@@ -336,7 +397,7 @@ Orb_cell_t Orb_cell_init(Orb_t init) {
 	the only cycles that can be formed just from standard
 	Orb.
 	*/
-	Orb_gc_autoclear_on_finalize(rv, &rv->core);
+	Orb_gc_autoclear_on_finalize(rv, (void**) &rv->core);
 	return rv;
 }
 Orb_t Orb_cell_get(Orb_cell_t c) {
