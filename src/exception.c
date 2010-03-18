@@ -5,6 +5,7 @@
 #include<stdio.h>
 
 static Orb_t o_current_eh;
+#define the_current_eh ((Orb_tls_t) (Orb_t_as_pointer(o_current_eh)))
 
 /*exception handler structure*/
 struct Orb_priv_eh_s {
@@ -13,8 +14,6 @@ struct Orb_priv_eh_s {
 	Orb_t type;
 	Orb_t value;
 };
-
-static Orb_tls_t the_current_eh;
 
 void* Orb_priv_eh_init(struct Orb_priv_eh_s** peh) {
 	struct Orb_priv_eh_s* new_eh = Orb_gc_malloc(
@@ -68,4 +67,8 @@ Orb_t Orb_E_TYPE(struct Orb_priv_eh_s* E) { return E->type; }
 Orb_t Orb_E_VALUE(struct Orb_priv_eh_s* E) { return E->type; }
 void Orb_E_RETHROW(struct Orb_priv_eh_s* E) { Orb_THROW(E->type, E->value); }
 
+void Orb_exception_init(void) {
+	Orb_gc_defglobal(&o_current_eh);
+	o_current_eh = Orb_t_from_pointer(Orb_tls_init());
+}
 

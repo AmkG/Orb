@@ -12,6 +12,11 @@ struct stringbuilder {
 	size_t capacity;
 };
 
+void prebuild(struct stringbuilder* sb) {
+	sb->string = 0;
+	sb->size = 0;
+	sb->capacity = 0;
+}
 void build(struct stringbuilder* sb, char c) {
 	if(sb->size == sb->capacity) {
 		size_t nc = sb->capacity + sb->capacity / 2;
@@ -22,7 +27,63 @@ void build(struct stringbuilder* sb, char c) {
 		sb->string = ns; sb->capacity = nc;
 	}
 	sb->string[sb->size] = c;
+	sb->string[sb->size + 1] = 0;
 	++sb->size;
+}
+
+Orb_t prc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 2) {
+		Orb_THROW_cc("apply", "incorrect number of arguments to prc");
+	}
+	Orb_t self = argv[0];
+
+	Orb_t osb = Orb_deref_cc(self, "*sb");
+	struct stringbuilder* sb = Orb_t_as_pointer(osb);
+
+	Orb_t oc = argv[1];
+	char c = Orb_t_as_integer(oc);
+
+	build(sb, c);
+
+	return Orb_NIL;
+}
+Orb_t prs(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 1) {
+		Orb_THROW_cc("apply", "incorrect number of arguments to prs");
+	}
+	Orb_t self = argv[0];
+
+	Orb_t osb = Orb_deref_cc(self, "*sb");
+	struct stringbuilder* sb = Orb_t_as_pointer(osb);
+
+	build(sb, ' ');
+
+	return Orb_NIL;
+}
+Orb_t pro(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 2) {
+		Orb_THROW_cc("apply", "incorrect number of arguments to pro");
+	}
+	Orb_t opro = argv[0];
+
+	Orb_t osb = Orb_deref_cc(opro, "*sb");
+
+	Orb_t oprc; Orb_t oprs;
+	Orb_BUILDER {
+		Orb_B_PARENT(Orb_t_from_cfunc(&prc));
+		Orb_B_FIELD_cc("*sb", osb);
+	} oprc = Orb_ENDBUILDER;
+	Orb_BUILDER {
+		Orb_B_PARENT(Orb_t_from_cfunc(&prs));
+		Orb_B_FIELD_cc("*sb", osb);
+	} oprs = Orb_ENDBUILDER;
+
+	Orb_t owrite = Orb_ref_cc(argv[1], "write");
+
+	Orb_safetycheck(owrite, Orb_SAFE(1) | Orb_SAFE(2) | Orb_SAFE(3));
+	Orb_call3(owrite, oprc, oprs, opro);
+
+	return Orb_NIL;
 }
 
 int main(void) {
@@ -40,6 +101,25 @@ int main(void) {
 	Orb_t xw = Orb_deref_cc(x, "write");
 	Orb_t zw = Orb_deref_cc(z, "write");
 	assert(zw == xw);
+
+	xw = Orb_ref_cc(x, "write");
+	zw = Orb_ref_cc(z, "write");
+	assert(xw != zw);
+
+	struct stringbuilder sb;
+	prebuild(&sb);
+
+	Orb_t opro;
+	Orb_BUILDER {
+		Orb_B_PARENT(Orb_t_from_cfunc(&pro));
+		Orb_B_FIELD_cc("*sb", Orb_t_from_pointer(&sb));
+	} opro = Orb_ENDBUILDER;
+
+	Orb_t rv = Orb_call1(opro, x);
+	assert(rv == Orb_NIL);
+	assert(strcmp(sb.string, "hello") == 0);
+
+	free(sb.string);
 
 	return 0;
 }
