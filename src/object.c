@@ -159,7 +159,7 @@ void Orb_object_init_after_symbol(void) {
 		/*TODO: write*/
 		Orb_cfunc* pf = Orb_gc_malloc(sizeof(Orb_cfunc));
 		*pf = &bound_method_invoke;
-		Orb_B_FIELD_AS_IF_VIRTUAL_cc("**ccall**",
+		Orb_B_FIELD_AS_IF_VIRTUAL_cc("**cfunc**",
 			Orb_t_from_pointer(pf)
 		);
 		Orb_B_FIELD_AS_IF_VIRTUAL_cc("**is-bound-method**",
