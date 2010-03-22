@@ -97,6 +97,35 @@ MAKE_WRITE(write_notfound, "notfound") /*#x*/
 #undef MAKE_WRITE
 
 static Orb_t bound_method_invoke(Orb_t argv[], size_t* pargc, size_t argl);
+static Orb_t extend(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc < 2) {
+		Orb_THROW_cc("apply",
+			"insufficient number of arguments to extend"
+		);
+	}
+	Orb_BUILDER {
+		Orb_B_PARENT(argv[1]);
+		size_t i;
+		for(i = 2; i < *pargc; i += 2) {
+			Orb_B_FIELD(argv[i], argv[i + 1]);
+		}
+	} return Orb_ENDBUILDER;
+}
+static Orb_t extend_v(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc < 2) {
+		Orb_THROW_cc("apply",
+			"insufficient number of arguments to "
+			"extend-as-if-virtual"
+		);
+	}
+	Orb_BUILDER {
+		Orb_B_PARENT(argv[1]);
+		size_t i;
+		for(i = 2; i < *pargc; i += 2) {
+			Orb_B_FIELD_AS_IF_VIRTUAL(argv[i], argv[i + 1]);
+		}
+	} return Orb_ENDBUILDER;
+}
 
 void Orb_object_init_after_symbol(void) {
 	Orb_t ofalseif = Orb_bless_safety(Orb_t_from_cfunc(&falseif),
@@ -146,10 +175,18 @@ void Orb_object_init_after_symbol(void) {
 	} bnotfound = Orb_ENDBUILDER;
 	Orb_BUILDER {
 		Orb_B_PARENT(Orb_NOTFOUND);
-		Orb_B_FIELD_AS_IF_VIRTUAL_cc("if", otrueif);
+		Orb_B_FIELD_AS_IF_VIRTUAL_cc("if", Orb_virtual(otrueif));
 		/*TODO:write*/
-		/*TODO:extend*/
-		/*TODO:extend-as-if-virtual*/
+		Orb_B_FIELD_AS_IF_VIRTUAL_cc("extend",
+			Orb_method_assured(
+				Orb_t_from_cfunc(extend)
+			)
+		);
+		Orb_B_FIELD_AS_IF_VIRTUAL_cc("extend-as-if-virtual",
+			Orb_method_assured(
+				Orb_t_from_cfunc(extend_v)
+			)
+		);
 	} bobject = Orb_ENDBUILDER;
 	/*TODO:bpointer*/
 	/*TODO:binteger*/
