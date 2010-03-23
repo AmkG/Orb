@@ -414,9 +414,38 @@ Orb_t Orb_cell_cas_get(Orb_cell_t c, Orb_t old, Orb_t newv) {
 	return cas(&c->core, old, newv);
 }
 
+/*
+ * C Extension Lock
+ */
+pthread_mutex_t the_CEL = PTHREAD_MUTEX_INITIALIZER;
+Orb_t oflag_tls;
+
+static void cel_init(void) {
+	Orb_gc_defglobal(&oflag_tls);
+	oflag_tls = Orb_t_from_pointer(Orb_tls_init());
+}
+
+int Orb_CEL_havelock(void) {
+	Orb_tls_t flag_tls = Orb_t_as_pointer(oflag_tls);
+	void* pp = Orb_tls_get(flag_tls);
+	return (intptr_t) pp;
+}
+
+void Orb_CEL_lock(void) {
+	pthread_mutex_lock(&the_CEL);
+	Orb_tls_t flag_tls = Orb_t_as_pointer(oflag_tls);
+	Orb_tls_set(flag_tls, (void*) 1);
+}
+void Orb_CEL_unlock(void) {
+	Orb_tls_t flag_tls = Orb_t_as_pointer(oflag_tls);
+	Orb_tls_set(flag_tls, (void*) 0);
+	pthread_mutex_unlock(&the_CEL);
+}
+
 void Orb_thread_support_init(void) {
 	/*init order is sensitive!*/
 	cas_init();
 	tls_init();
+	cel_init();
 }
 
