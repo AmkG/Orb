@@ -94,11 +94,22 @@ static inline Orb_t Orb_call3(Orb_t f, Orb_t a, Orb_t b, Orb_t c) {
 	return Orb_call(argv, 4);
 }
 
+/*Create function objects from C functions.
+The created function objects will acquire the
+C Extension Lock (CEL) when called.
+To disable acquisition of the CEL, use
+Orb_CELfree() below.
+*/
 Orb_t Orb_t_from_cf0(Orb_t (*cf)(void));
 Orb_t Orb_t_from_cf1(Orb_t (*cf)(Orb_t));
 Orb_t Orb_t_from_cf2(Orb_t (*cf)(Orb_t, Orb_t));
 Orb_t Orb_t_from_cf3(Orb_t (*cf)(Orb_t, Orb_t, Orb_t));
 Orb_t Orb_t_from_cfv(Orb_t (*cf)(Orb_t*, size_t));
+
+/*Pass the result of one of the above functions to return
+an function object that does not acquire the CEL.
+*/
+Orb_t Orb_CELfree(Orb_t);
 
 /*low-level cfunc*/
 typedef Orb_t Orb_cfunc_f(Orb_t argv[], size_t* pargc, size_t argl);
