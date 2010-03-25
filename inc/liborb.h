@@ -225,7 +225,7 @@ struct Orb_priv_eh_s;
 			do
 #define Orb_CATCH(E)\
 			while(0);\
-			Orb_priv_eh_end(Orb_priv_eh_dat)\
+			Orb_priv_eh_end(Orb_priv_eh_dat);\
 		} else {\
 			struct Orb_priv_eh_s* E = Orb_priv_eh_dat;\
 			do
