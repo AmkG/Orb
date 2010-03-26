@@ -104,8 +104,7 @@ static Orb_t cf_CELfree(Orb_t argv[], size_t* pargc, size_t argl) {
 	int N = Orb_t_as_integer(oN);
 
 	Orb_t opF = Orb_deref_cc(self, "**f**");
-	void** pF = Orb_t_as_pointer(opF);
-	void* vpf = *pF;
+	void* vpf = Orb_t_as_pointer(opF);
 
 	return core_call(vpf, argv, *pargc, N);
 }
