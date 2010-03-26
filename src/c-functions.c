@@ -90,7 +90,7 @@ static Orb_t cf(Orb_t argv[], size_t* pargc, size_t argl) {
 			Orb_CEL_unlock();
 		} Orb_CATCH(E) {
 			Orb_CEL_unlock();
-			Orb_RETHROW(E);
+			Orb_E_RETHROW(E);
 		} Orb_ENDTRY;
 		return rv;
 	}
