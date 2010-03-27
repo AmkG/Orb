@@ -281,6 +281,33 @@ Orb_t Orb_method(Orb_t);
  */
 int Orb_bool(Orb_t);
 
+/*
+ * Sequences
+ */
+/*create a sequence from the given array of specified size*/
+Orb_t Orb_seq(Orb_t*, size_t);
+/*concatenate two sequences*/
+Orb_t Orb_conc(Orb_t, Orb_t);
+/*ensures that the given value is indeed a sequence, or is
+convertible to a sequence, or throws an error if not.
+Returns a true sequence; if the given value is convertible
+to a sequence but is not itself a sequence, returns the
+converted value.
+*/
+Orb_t Orb_ensure_seq(Orb_t);
+/*gets the first element of a sequence*/
+Orb_t Orb_first(Orb_t);
+/*determines the length of a sequence*/
+Orb_t Orb_len_o(Orb_t);
+static inline size_t Orb_len(Orb_t s) {
+	return Orb_t_as_integer(Orb_len_o(s));
+}
+/*looks up a particular index in the sequence*/
+Orb_t Orb_nth_o(Orb_t, Orb_t);
+static inline Orb_nth(Orb_t s, size_t i) {
+	return Orb_nth_o(s, Orb_t_from_integer(i));
+}
+
 #ifdef __cplusplus
 }
 #endif
