@@ -599,6 +599,7 @@ Orb_t Orb_virtual_x(void) {
 
 Orb_t Orb_ref(Orb_t obj, Orb_t field) {
 	Orb_t val = Orb_deref(obj, field);
+	if(val == Orb_NOTFOUND) return val;
 	Orb_t check;
 
 	/*check for virtuality*/
