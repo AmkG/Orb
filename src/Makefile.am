@@ -15,7 +15,8 @@ liborb_la_SOURCES =\
 	object.c\
 	init.c\
 	call.c\
-	c-functions.c
+	c-functions.c\
+	bool.c
 liborb_la_LDFLAGS = -module
 
 check_PROGRAMS = check-symbols check-cf

@@ -5,6 +5,7 @@
 #include"object.h"
 #include"thread-support.h"
 #include"c-functions.h"
+#include"bool.h"
 
 void Orb_post_gc_init(int argc, char* argv[]) {
 	Orb_thread_support_init();
@@ -13,5 +14,6 @@ void Orb_post_gc_init(int argc, char* argv[]) {
 	Orb_symbol_init();
 	Orb_object_init_after_symbol();
 	Orb_c_functions_init();
+	Orb_bool_init();
 }
 

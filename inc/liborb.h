@@ -276,6 +276,11 @@ Orb_t Orb_virtual(Orb_t);
 Orb_t Orb_virtual_x(void);
 Orb_t Orb_method(Orb_t);
 
+/*
+ * Conversion to boolean
+ */
+int Orb_bool(Orb_t);
+
 #ifdef __cplusplus
 }
 #endif
