@@ -18,11 +18,15 @@ liborb_la_SOURCES =\
 	c-functions.c
 liborb_la_LDFLAGS = -module
 
-check_PROGRAMS = check-symbols
+check_PROGRAMS = check-symbols check-cf
 check_symbols_SOURCES =\
 	check-symbols.c
 check_symbols_LDADD = liborb.la
 check_symbols_LDFLAGS = -static
+check_cf_SOURCES=\
+	check-cf.c
+check_cf_LDADD = liborb.la
+check_cf_LDFLAGS = -static
 
-TESTS = check-symbols
+TESTS = check-symbols check-cf
 

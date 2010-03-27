@@ -3,4 +3,5 @@ orb
 *.a
 *.so
 check-symbols
+check-cf
 
