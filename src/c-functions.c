@@ -11,7 +11,8 @@ typedef Orb_t (*variadic)(Orb_t*, size_t);
 /*
  * Generic function to handle various c extension functions
  *
- * Performs the specified call to
+ * Performs the specified call to the given function, given the
+ * arguments and the expected number of arguments.
  */
 static Orb_t core_call(void* vpf, Orb_t argv[], size_t argc, int expect) {
 	if(expect < 0) {
@@ -70,7 +71,11 @@ static Orb_t core_call(void* vpf, Orb_t argv[], size_t argc, int expect) {
 	}
 }
 
-/*generic handling of cf*/
+/*
+ * Generic handling of cf.
+ *
+ * Locks the CEL if not locked already before calling the core code.
+ */
 static Orb_t cf(Orb_t argv[], size_t* pargc, size_t argl) {
 	Orb_t self = argv[0];
 
@@ -81,10 +86,12 @@ static Orb_t cf(Orb_t argv[], size_t* pargc, size_t argl) {
 	void* vpf = Orb_t_as_pointer(opF);
 
 	if(Orb_CEL_havelock()) {
+		/*not locked, so just call directly*/
 		return core_call(vpf, argv, *pargc, N);
 	} else {
 		Orb_t rv;
 		Orb_CEL_lock();
+		/*make sure that exceptions unlock the CEL*/
 		Orb_TRY {
 			rv = core_call(vpf, argv, *pargc, N);
 			Orb_CEL_unlock();
@@ -96,7 +103,9 @@ static Orb_t cf(Orb_t argv[], size_t* pargc, size_t argl) {
 	}
 }
 
-/*generic handling of CEL-free cf*/
+/*
+ * Generic handling of CEL-free cf
+ */
 static Orb_t cf_CELfree(Orb_t argv[], size_t* pargc, size_t argl) {
 	Orb_t self = argv[0];
 
@@ -120,6 +129,7 @@ void Orb_c_functions_init(void) {
 	o_cf_CELfree_base = Orb_t_from_cfunc(&cf_CELfree);
 }
 
+/*the code is repetitive, so handle copy-pasta with macrology*/
 #define BUILD_CONVERTER(N)\
 	Orb_t Orb_t_from_cf ## N(function ## N f) {\
 		function ## N* pf = Orb_gc_malloc(sizeof(function ## N));\
