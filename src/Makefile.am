@@ -19,15 +19,22 @@ liborb_la_SOURCES =\
 	bool.c
 liborb_la_LDFLAGS = -module
 
-check_PROGRAMS = check-symbols check-cf
+check_PROGRAMS =\
+	check-symbols\
+	check-cf\
+	check-bool
 check_symbols_SOURCES =\
 	check-symbols.c
 check_symbols_LDADD = liborb.la
 check_symbols_LDFLAGS = -static
-check_cf_SOURCES=\
+check_cf_SOURCES =\
 	check-cf.c
 check_cf_LDADD = liborb.la
 check_cf_LDFLAGS = -static
+check_bool_SOURCES =\
+	check-bool.c
+check_bool_LDADD = liborb.la
+check_bool_LDFLAGS = -static
 
-TESTS = check-symbols check-cf
+TESTS = check-symbols check-cf check-bool
 
