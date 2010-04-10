@@ -295,8 +295,6 @@ to a sequence but is not itself a sequence, returns the
 converted value.
 */
 Orb_t Orb_ensure_seq(Orb_t);
-/*gets the first element of a sequence*/
-Orb_t Orb_first(Orb_t);
 /*determines the length of a sequence*/
 Orb_t Orb_len_o(Orb_t);
 static inline size_t Orb_len(Orb_t s) {
@@ -307,6 +305,32 @@ Orb_t Orb_nth_o(Orb_t, Orb_t);
 static inline Orb_nth(Orb_t s, size_t i) {
 	return Orb_nth_o(s, Orb_t_from_integer(i));
 }
+/*gets the first element of a sequence*/
+static inline Orb_t Orb_first(Orb_t s) {
+	return Orb_nth(s, 0);
+}
+
+/*
+ * Each item in sequence
+ */
+struct Orb_priv_each_s;
+struct Orb_priv_each_s* Orb_priv_each_init(Orb_t);
+void Orb_priv_each_next(struct Orb_priv_each_s*, size_t);
+int Orb_priv_each_atend(struct Orb_priv_each_s*);
+Orb_t Orb_priv_each_cur(struct Orb_priv_each_s*);
+/*Usage:
+Orb_EACH(i, seq) {
+	do_something(i);
+} Orb_ENDEACH;
+*/
+#define Orb_EACH(i, s) do {\
+	struct Orb_priv_each_s* Orb_priv_each_pointer;\
+	Orb_t i;\
+	for(Orb_priv_each_pointer = Orb_priv_each_init(s);\
+			(!Orb_priv_each_atend(Orb_priv_each_pointer)) &&\
+			((i = Orb_priv_each_cur(Orb_priv_each_pointer)) || 1);\
+		Orb_priv_each_next(Orb_priv_each_pointer, 1))
+#define Orb_ENDEACH } while(0)
 
 #ifdef __cplusplus
 }
