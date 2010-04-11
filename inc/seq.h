@@ -26,7 +26,6 @@ Orb_t Orb_mapreduce_cfunc(Orb_t argv[], size_t* pargc, size_t argl);
 void Orb_iterate_init(void);
 void Orb_map_init(void);
 void Orb_mapreduce_init(void);
-void Orb_first_init(void);
 
 #endif
 

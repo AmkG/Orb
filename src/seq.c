@@ -125,7 +125,6 @@ void Orb_seq_init(void) {
 	Orb_iterate_init();
 	Orb_map_init();
 	Orb_mapreduce_init();
-	Orb_first_init();
 
 	Orb_gc_defglobal(&o_hfield1);
 	Orb_gc_defglobal(&o_hfield2);
