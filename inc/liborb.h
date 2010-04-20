@@ -332,6 +332,11 @@ Orb_EACH(i, seq) {
 		Orb_priv_each_next(Orb_priv_each_pointer, 1))
 #define Orb_ENDEACH } while(0)
 
+/*
+ * Thread Pool
+ */
+void Orb_thread_pool_add(Orb_t);
+
 #ifdef __cplusplus
 }
 #endif
