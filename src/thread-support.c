@@ -14,6 +14,8 @@
 
 #include<string.h>
 
+#include<assert.h>
+
 /*
  * Thread-local
  */
