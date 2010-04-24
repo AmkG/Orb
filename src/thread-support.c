@@ -458,3 +458,55 @@ size_t Orb_num_processors(void) {
 	return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
+/*
+ * Launch a new thread
+ */
+struct Orb_thread_s {
+	Orb_cell_t cstate;
+	pthread_t tid;
+};
+struct threadstate_s {
+	enum {
+		running,
+		finished
+	} state;
+	Orb_t ob; /*== f when running, return value when finished*/
+};
+typedef struct threadstate_s* threadstate_t;
+
+static void* new_thread(void*);
+
+Orb_thread_t Orb_priv_new_thread(Orb_t f) {
+	threadstate_t ts = Orb_gc_malloc(sizeof(struct threadstate_s));
+	ts->state = running;
+	ts->ob = f;
+	Orb_thread_t rv = Orb_gc_malloc(sizeof(struct Orb_thread_s));
+	rv->cstate = Orb_cell_init(Orb_t_from_pointer(ts));
+
+	int err = pthread_create(&rv->tid, 0, new_thread, rv);
+	if(err != 0) {
+		/*TODO get error message from system*/
+		Orb_THROW_cc("thread", "Error launching thread");
+	}
+	return rv;
+}
+
+static void* new_thread(void* vpt) {
+	Orb_thread_t pt = vpt;
+	Orb_t ots = Orb_cell_get(pt->cstate);
+
+	threadstate_t ts = Orb_t_as_pointer(ots);
+	assert(ts->state == running);
+	Orb_t f = ts->ob;
+
+	Orb_t rv = Orb_call0(f);
+
+	threadstate_t npts = Orb_gc_malloc(sizeof(struct threadstate_s));
+	npts->state = finished;
+	npts->ob = rv;
+
+	Orb_cell_set(pt->cstate, Orb_t_from_pointer(npts));
+
+	return 0;
+}
+
