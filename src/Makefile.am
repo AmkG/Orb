@@ -16,7 +16,8 @@ liborb_la_SOURCES =\
 	init.c\
 	call.c\
 	c-functions.c\
-	bool.c
+	bool.c\
+	thread-pool.c
 liborb_la_LDFLAGS = -module
 
 check_PROGRAMS =\

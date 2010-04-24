@@ -15,5 +15,6 @@ void Orb_post_gc_init(int argc, char* argv[]) {
 	Orb_object_init_after_symbol();
 	Orb_c_functions_init();
 	Orb_bool_init();
+	Orb_thread_pool_init();
 }
 
