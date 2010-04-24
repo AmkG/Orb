@@ -38,6 +38,7 @@ static inline int Orb_cell_cas(Orb_cell_t c, Orb_t o, Orb_t n) {
 
 /*general*/
 void Orb_thread_support_init(void);
+size_t Orb_num_processors(void);
 
 #endif /* THREAD_SUPPORT_H */
 

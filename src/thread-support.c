@@ -10,6 +10,7 @@
 #include<stdlib.h>
 #include<semaphore.h>
 #include<errno.h>
+#include<unistd.h>
 
 #include<string.h>
 
@@ -447,5 +448,13 @@ void Orb_thread_support_init(void) {
 	cas_init();
 	tls_init();
 	cel_init();
+}
+
+/*
+ * Number of processors
+ */
+size_t Orb_num_processors(void) {
+	/*TODO: make more portable*/
+	return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
