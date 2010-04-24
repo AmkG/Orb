@@ -191,6 +191,9 @@ Orb_t Orb_new_thread(Orb_t);
 Orb_t Orb_new_atom(Orb_t);
 Orb_t Orb_new_sema(size_t);
 
+/*yields the processor time slice*/
+void Orb_yield(void);
+
 /*releases the C Extension Lock*/
 void Orb_CEL_unlock(void);
 /*re-acquires the C Extension Lock*/

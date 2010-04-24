@@ -512,3 +512,10 @@ static void* new_thread(void* vpt) {
 	return 0;
 }
 
+/*
+ *  Yield processor time
+ */
+void Orb_yield(void) {
+	sched_yield();
+}
+
