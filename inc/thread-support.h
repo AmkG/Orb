@@ -36,6 +36,11 @@ static inline int Orb_cell_cas(Orb_cell_t c, Orb_t o, Orb_t n) {
 	return o == Orb_cell_cas_get(c, o, n);
 }
 
+/*new threads*/
+struct Orb_thread_s;
+typedef struct Orb_thread_s* Orb_thread_t;
+Orb_thread_t Orb_priv_new_thread(Orb_t);
+
 /*general*/
 void Orb_thread_support_init(void);
 size_t Orb_num_processors(void);
