@@ -102,7 +102,10 @@ retry:
 			goto retry;
 		}
 		/*succeeded CAS, now start each thread in pool*/
-		/*TODO*/
+		size_t i; Orb_t f = Orb_t_from_cfunc(&core_cfunc);
+		for(i = Orb_num_processors(); i; --i) {
+			Orb_new_thread(f);
+		}
 		/*set up the variables for the rest of the code*/
 		ostate = nstate;
 		nv = Orb_gc_malloc(sizeof(tp_state));
