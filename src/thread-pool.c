@@ -158,7 +158,7 @@ static Orb_t core_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
 			} else {
 				/*attempt to pop off*/
 				Orb_t todo;
-				queue_t nq = queue_pop(custate->tasks, &todo);
+				queue_t nq = queue_pop(curstate->tasks, &todo);
 				/*now try to update state*/
 				nv->tasks = nq;
 				nv->waiters = curstate->waiters;
