@@ -58,5 +58,5 @@ check_thread_pool_SOURCES =\
 check_thread_pool_LDADD = liborb.la
 check_thread_pool_LDFLAGS = -static
 
-TESTS = check-symbols check-cf check-bool check-thread-pool
+TESTS = $(check_PROGRAMS)
 
