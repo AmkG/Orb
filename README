@@ -1,0 +1,75 @@
+
+Introduction
+============
+
+**Orb** is an almost-pure (I/O impure) functional LISP-like
+language.  It introduces the concept of an "orb", which is a
+function in the (otherwise pure) language that contains mutable
+state.  In addition, it uses a prototype-based object system as
+well as shared-memory state-holding objects.  It is designed to
+be easily extended and embedded.
+
+Orbs
+----
+
+An *orb* is a function which holds a mutable state.  There are
+some limitations on orbs:
+
+1.  Functions which accept orbs must declare this fact as such
+    on the function arguments, by adding a "@" to the name.
+    Only variables starting with "@" can contain orbs, although
+    such variables can also be called with an ordinary,
+    non-mutable-state function:
+
+        (def (f @orb)
+          (@orb 42))
+        (def (g nonorb)
+          (nonorb 42))
+        (def (h @orb nonorb)
+          (f @orb)   ; valid
+          (f nonorb) ; valid
+          (g @orb))  ; invalid! run-time error
+
+    This limitation implies stricter limitations than is
+    apparent: for example, the built-in functions that launch
+    threads or put tasks into a thread-pool specifically do
+    ***not*** accept orbs.  In practice it means that orbs
+    cannot be placed into data structures and cannot be
+    executed in threads other than the launching thread.
+
+2.  Functions are not allowed to return orbs.  This means that
+    they are downward funargs: i.e. they can only be passed
+    "downward" to sub-functions, they cannot be passed
+    "upwards" from functions to their callers:
+
+        (def (f @orb nonorb)
+          nonorb) ; valid
+        (def (g @orb nonorb)
+          @orb)   ; invalid! compile-time error
+
+    This limitation implies that orbs can be/are implemented as
+    simple stack allocation (and may be slightly faster / less
+    GC - but do note that there is a runtime check to see if
+    called functions can accept orbs).
+
+3.  Functions that close on orbs must themselves be orbs.  That
+    is, if a function has any free variables that are orbs,
+    they must be orbs also:
+
+        (def (f @orb nonorb)
+          (fn () (nonorb)) ; valid
+          (@fn () (@orb))  ; valid
+          (fn () (@orb)))  ; invalid! compile-time error
+
+    This limitation forces strictness on the first 2
+    limitations.
+
+### Orbs and Continuations
+
+As of this time, it appears that orbs interact badly with
+continuations.  Continuations and how to implement orbs will
+be considered.
+
+As of this time, continuations are not part of the language
+and might not become part of the language at all either.
+
