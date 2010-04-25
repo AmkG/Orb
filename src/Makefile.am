@@ -16,7 +16,7 @@
 #  along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 
 LIBS=@LIBS@
-CFLAGS=@CFLAGS@
+AM_CFLAGS=@CFLAGS@
 CC=@CC@
 
 AM_LDFLAGS = -lgc
