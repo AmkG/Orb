@@ -41,6 +41,7 @@ static queue_t queue_pop(queue_t q, Orb_t* prv) {
 			list* nn = Orb_gc_malloc(sizeof(list));
 			nn->val = to_reverse->val;
 			nn->next = building;
+			building = nn;
 			to_reverse = to_reverse->next;
 		}
 		rv->insert_to = 0;
