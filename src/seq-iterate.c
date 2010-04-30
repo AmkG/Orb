@@ -126,4 +126,96 @@ Orb_t Orb_priv_each_cur(struct Orb_priv_each_s* es) {
 	return *es->ptr;
 }
 
-/*TODO Orb_iterate_cfunc(), Orb_iterate_init()*/
+static Orb_t hfield;
+
+static Orb_t o_cur_cfunc;
+static Orb_t o_next_cfunc;
+static Orb_t o_at_end_cfunc;
+
+#define GET_ES\
+	Orb_t self = argv[0];\
+	Orb_t oes = Orb_deref(self, hfield);\
+	struct Orb_priv_each_s* es = Orb_t_as_pointer(oes)
+
+static Orb_t cur_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 1) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to @cur"
+		);
+	}
+	GET_ES;
+
+	return Orb_priv_each_cur(es);
+}
+
+static Orb_t next_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 2) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to @next"
+		);
+	}
+	GET_ES;
+	Orb_t oN = argv[1];
+	size_t N = Orb_t_as_pointer(oN);
+
+	Orb_priv_each_next(es, N);
+
+	return Orb_NIL;
+}
+
+static Orb_t at_end_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 1) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to @at-end"
+		);
+	}
+	GET_ES;
+
+	if(Orb_priv_each_atend(es)) return Orb_TRUE;
+	else return Orb_NIL;
+}
+
+Orb_t Orb_iterate_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 3) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to s!iterate"
+		);
+	}
+	Orb_t s = argv[1];
+	Orb_t f = argv[2];
+
+	Orb_safetycheck(f,
+		Orb_SAFE(1) | Orb_SAFE(2) | Orb_SAFE(3)
+	);
+
+	struct Orb_priv_each_s* es = Orb_priv_each_init(s);
+	Orb_t oes = Orb_t_from_pointer(es);
+
+	Orb_t cur, next, at_end;
+	Orb_BUILDER {
+		Orb_B_PARENT(o_cur_cfunc);
+		Orb_B_FIELD(hfield, oes);
+	} cur = Orb_ENDBUILDER;
+	Orb_BUILDER {
+		Orb_B_PARENT(o_next_cfunc);
+		Orb_B_FIELD(hfield, oes);
+	} next = Orb_ENDBUILDER;
+	Orb_BUILDER {
+		Orb_B_PARENT(o_at_end_cfunc);
+		Orb_B_FIELD(hfield, oes);
+	} at_end = Orb_ENDBUILDER;
+}
+
+void Orb_iterate_init(void) {
+	Orb_gc_defglobal(&hfield);
+	Orb_gc_defglobal(&o_cur_cfunc);
+	Orb_gc_defglobal(&o_next_cfunc);
+	Orb_gc_defglobal(&o_at_endt_cfunc);
+
+	hfield = Orb_t_from_pointer(&hfield);
+	o_cur_cfunc = Orb_t_from_cfunc(&cur_cfunc);
+	o_next_cfunc = Orb_t_from_cfunc(&next_cfunc);
+	o_at_end_cfunc = Orb_t_from_cfunc(&at_end_cfunc);
+}
+
+
