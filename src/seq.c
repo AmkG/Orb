@@ -416,6 +416,12 @@ error:
 	Orb_THROW_cc("value", "Sequence index out of range");
 }
 
+Orb_t Orb_len_o(Orb_t seq) {
+	seq = Orb_ensure_seq(seq);
+
+	return Orb_deref_cc(seq, "len");
+}
+
 /*
  * Orb_seq_decompose() implementation
  */
