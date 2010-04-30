@@ -204,6 +204,17 @@ Orb_t Orb_iterate_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
 		Orb_B_PARENT(o_at_end_cfunc);
 		Orb_B_FIELD(hfield, oes);
 	} at_end = Orb_ENDBUILDER;
+
+	if(argl >= 4) {
+		argv[0] = f;
+		argv[1] = cur;
+		argv[2] = next;
+		argv[3] = at_end;
+		*pargc = 4;
+		return Orb_TRAMPOLINE;
+	} else {
+		return Orb_call3(f, cur, next, at_end);
+	}
 }
 
 void Orb_iterate_init(void) {
