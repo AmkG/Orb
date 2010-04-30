@@ -33,7 +33,11 @@ liborb_la_SOURCES =\
 	call.c\
 	c-functions.c\
 	bool.c\
-	thread-pool.c
+	thread-pool.c\
+	seq.c\
+	seq-iterate.c\
+	seq-map.c\
+	seq-mapreduce.c
 liborb_la_LDFLAGS = -module
 
 check_PROGRAMS =\
