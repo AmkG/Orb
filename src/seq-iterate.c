@@ -156,7 +156,7 @@ static Orb_t next_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
 	}
 	GET_ES;
 	Orb_t oN = argv[1];
-	size_t N = Orb_t_as_pointer(oN);
+	size_t N = Orb_t_as_integer(oN);
 
 	Orb_priv_each_next(es, N);
 
@@ -210,7 +210,7 @@ void Orb_iterate_init(void) {
 	Orb_gc_defglobal(&hfield);
 	Orb_gc_defglobal(&o_cur_cfunc);
 	Orb_gc_defglobal(&o_next_cfunc);
-	Orb_gc_defglobal(&o_at_endt_cfunc);
+	Orb_gc_defglobal(&o_at_end_cfunc);
 
 	hfield = Orb_t_from_pointer(&hfield);
 	o_cur_cfunc = Orb_t_from_cfunc(&cur_cfunc);
