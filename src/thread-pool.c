@@ -97,6 +97,9 @@ typedef struct tp_state_s tp_state;
 typedef tp_state const* tp_state_t;
 
 void Orb_thread_pool_init(void) {
+	Orb_gc_defglobal(&state);
+	Orb_gc_defglobal(&wait_sema);
+
 	state = Orb_cell_init(Orb_NOTFOUND);
 	wait_sema = Orb_sema_init(0);
 }
