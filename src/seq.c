@@ -107,12 +107,22 @@ static Orb_t idfn(Orb_t argv[], size_t* pargc, size_t argl) {
 }
 
 static Orb_t empty_decompose(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 5) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to ()!decompose"
+		);
+	}
 	argv[0] = argv[1];
 	*pargc = 1;
 	return Orb_TRAMPOLINE;
 }
 /*method: self @f0 @f1 @f2*/
 static Orb_t single_decompose(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 5) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to (_)!decompose"
+		);
+	}
 	Orb_t self = argv[1];
 	Orb_t f1 = argv[3];
 
@@ -124,6 +134,11 @@ static Orb_t single_decompose(Orb_t argv[], size_t* pargc, size_t argl) {
 }
 /*method: self @f0 @f1 @f2*/
 static Orb_t conc_decompose(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 5) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to (conc _ _)!decompose"
+		);
+	}
 	Orb_t self = argv[1];
 	Orb_t f2 = argv[4];
 
@@ -239,7 +254,7 @@ void Orb_seq_init(void) {
 static Orb_t arr_decompose(Orb_t argv[], size_t* pargc, size_t argl) {
 #define argc (*pargc)
 
-	if(argc != 4) {
+	if(argc != 5) {
 		Orb_THROW_cc("apply",
 			"Incorrect number of arguments to array!decompose"
 		);
