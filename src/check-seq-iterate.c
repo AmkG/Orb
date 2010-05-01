@@ -97,7 +97,7 @@ int main(void) {
 	Orb_t arr;
 	{ Orb_t a[8]; size_t i;
 		for(i = 0; i < 8; ++i) {
-			a[i] = i;
+			a[i] = Orb_t_from_integer(i);
 		}
 		arr = Orb_seq(a, 8);
 	}
