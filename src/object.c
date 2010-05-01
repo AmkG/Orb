@@ -448,6 +448,8 @@ top:
 			Orb_t parent_parent = parent_format[N+1];
 
 			struct Orb_priv_ob_s* nob = Orb_priv_ob_start();
+			/*get our direct parent's parent as our parent*/
+			Orb_priv_ob_parent(nob, parent_parent);
 			size_t i;
 			for(i = 0; i < N; ++i) {
 				/*skip virtuals checking*/
