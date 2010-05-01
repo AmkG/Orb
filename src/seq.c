@@ -193,7 +193,7 @@ void Orb_seq_init(void) {
 	/*single sequence*/
 	Orb_BUILDER {
 		Orb_B_PARENT(o_empty);
-		Orb_B_FIELD_cc("len", Orb_t_from_integer(0));
+		Orb_B_FIELD_cc("len", Orb_t_from_integer(1));
 		Orb_B_FIELD_cc("decompose",
 			Orb_method(
 				Orb_bless_safety(
