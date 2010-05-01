@@ -6,4 +6,5 @@ check-symbols
 check-cf
 check-bool
 check-thread-pool
+check-seq-iterate
 
