@@ -372,7 +372,7 @@ Orb_t Orb_conc(Orb_t l, Orb_t r) {
 	}
 
 	Orb_BUILDER {
-		Orb_B_PARENT(o_arr_base);
+		Orb_B_PARENT(o_conc_base);
 		Orb_B_FIELD_cc("len", Orb_t_from_integer(llen + rlen));
 		Orb_B_FIELD(o_hfield1, l);
 		Orb_B_FIELD(o_hfield2, r);
