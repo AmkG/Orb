@@ -1,4 +1,5 @@
 #include<liborb.h>
+#include"seq.h"
 
 #include<assert.h>
 
@@ -103,6 +104,15 @@ int main(void) {
 	}
 	assert(each_test(arr));
 	assert(iterate_test(arr));
+
+	Orb_t split;
+	{ Orb_t single, l, r;
+		int decompose_rv = Orb_seq_decompose(arr, &single, &l, &r);
+		assert(decompose_rv == 2);
+		split = Orb_conc(l, r);
+	}
+	assert(each_test(split));
+	assert(iterate_test(split));
 
 	return 0;
 }
