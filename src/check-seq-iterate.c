@@ -14,6 +14,7 @@ int each_test(Orb_t s) {
 		if(oi != Orb_t_from_integer(i)) return 0;
 		++i;
 	} Orb_ENDEACH;
+	if(i != 8) return 0;
 
 	return 1;
 }
