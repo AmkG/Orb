@@ -71,7 +71,7 @@ static void destructure(struct Orb_priv_each_s* es, Orb_t s) {
 		size_t start, sz;
 		if(Orb_array_backed(s, &es->backer, &start, &sz)) {
 			es->ptr = es->backer + start;
-			es->end = es->backer + sz;
+			es->end = es->backer + start + sz;
 			return;
 		}
 
