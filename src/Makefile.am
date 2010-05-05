@@ -34,6 +34,7 @@ liborb_la_SOURCES =\
 	c-functions.c\
 	bool.c\
 	thread-pool.c\
+	defer.c\
 	seq.c\
 	seq-iterate.c\
 	seq-map.c\
