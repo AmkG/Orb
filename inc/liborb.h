@@ -360,7 +360,13 @@ void Orb_thread_pool_add(Orb_t);
 /*
  * Defer / futures / singletons
  */
+/*defer the given function for execution, possibly
+on another thread.
+*/
 Orb_t Orb_defer(Orb_t);
+/*create an object which, when executed, will execute
+the given function exactly once and cache its result.
+*/
 Orb_t Orb_runonce(Orb_t);
 
 #ifdef __cplusplus
