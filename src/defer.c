@@ -79,8 +79,8 @@ static void post_run(Orb_cell_t c, defer_t d) {
 		if(read == ostate) {
 			/*succeeded. wake up if any waiters*/
 			if(pstate->type == state_wait_on_running) {
-				size_t N = pstate->error.N;
-				Orb_sema_t sema = state->error.sema;
+				size_t N = pstate->waitlist.N;
+				Orb_sema_t sema = pstate->waitlist.sema;
 
 				size_t i;
 				for(i = 0; i < N; ++i) {
@@ -141,14 +141,14 @@ static void core_try_run(Orb_cell_t c) {
 	}
 }
 /*core function for **call** method*/
-static void core_call(Orb_cell_t c) {
+static Orb_t core_call(Orb_cell_t c) {
 	Orb_t ostate = Orb_cell_get(c);
 	for(;;) {
 		defer_t pstate = Orb_t_as_pointer(ostate);
 		if(pstate->type == state_idle) {
 			defer_t result;
 			Orb_t read = to_running(c, ostate, pstate, &result);
-			if(read == ostate) ostate = result;
+			if(read == ostate) ostate = Orb_t_from_pointer(result);
 			else ostate = read;
 		} else if(pstate->type == state_running) {
 			/*create semaphore and wait on it*/
@@ -178,7 +178,7 @@ static void core_call(Orb_cell_t c) {
 			nstate->waitlist.sema = sema;
 			nstate->waitlist.N = N + 1;
 
-			Orb_T read = Orb_cell_cas_get(c,
+			Orb_t read = Orb_cell_cas_get(c,
 				ostate, Orb_t_from_pointer(nstate)
 			);
 			if(read == ostate) {
@@ -253,7 +253,7 @@ Orb_t Orb_runonce(Orb_t f) {
 	Orb_t rv;
 	Orb_BUILDER {
 		Orb_B_PARENT(defer_base);
-		Orb_B_FIELD(hfield1, c);
+		Orb_B_FIELD(hfield1, Orb_t_from_pointer(c));
 	} rv = Orb_ENDBUILDER;
 	return rv;
 }
