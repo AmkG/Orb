@@ -357,6 +357,11 @@ Orb_EACH(i, seq) {
  * Thread Pool
  */
 void Orb_thread_pool_add(Orb_t);
+/*
+ * Defer / futures / singletons
+ */
+Orb_t Orb_defer(Orb_t);
+Orb_t Orb_runonce(Orb_t);
 
 #ifdef __cplusplus
 }
