@@ -195,9 +195,73 @@ static void core_call(Orb_cell_t c) {
 	}
 }
 
-static Orb_t defer_base;
 static Orb_t hfield1;
+static Orb_t defer_base;
+
+/*method function for try-run*/
+static Orb_t try_run_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 2) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to try-run"
+		);
+	}
+	Orb_t this = argv[1];
+	Orb_t oc = Orb_deref(this, hfield1);
+	Orb_cell_t c = Orb_t_as_pointer(oc);
+	core_try_run(c);
+	return Orb_NIL;
+}
+/*method function for call*/
+static Orb_t call_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 2) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to call"
+		);
+	}
+	Orb_t this = argv[1];
+	Orb_t oc = Orb_deref(this, hfield1);
+	Orb_cell_t c = Orb_t_as_pointer(oc);
+	return core_call(c);
+}
 
 void Orb_defer_init(void) {
+	Orb_gc_defglobal(&hfield1);
+	Orb_gc_defglobal(&defer_base);
+
+	hfield1 = Orb_t_from_pointer(&hfield1);
+	Orb_BUILDER {
+		Orb_B_PARENT(Orb_OBJECT);
+		Orb_B_FIELD_cc("try-run",
+			Orb_method(
+				Orb_t_from_cfunc(&try_run_cfunc)
+			)
+		);
+		Orb_B_FIELD_cc("**call**",
+			Orb_method(
+				Orb_t_from_cfunc(&call_cfunc)
+			)
+		);
+	} defer_base = Orb_ENDBUILDER;
+}
+Orb_t Orb_runonce(Orb_t f) {
+	defer_t state = Orb_gc_malloc(sizeof(defer));
+	state->type = state_idle;
+	state->f = f;
+
+	Orb_cell_t c = Orb_cell_init(Orb_t_from_pointer(state));
+
+	Orb_t rv;
+	Orb_BUILDER {
+		Orb_B_PARENT(defer_base);
+		Orb_B_FIELD(hfield1, c);
+	} rv = Orb_ENDBUILDER;
+	return rv;
+}
+Orb_t Orb_defer(Orb_t f) {
+	/*exactly like runonce, but add to thread-pool*/
+	Orb_t rv = Orb_runonce(f);
+	Orb_t tryrun = Orb_ref_cc(rv, "try-run");
+	Orb_thread_pool_add(tryrun);
+	return rv;
 }
 
