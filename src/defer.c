@@ -265,3 +265,11 @@ Orb_t Orb_defer(Orb_t f) {
 	return rv;
 }
 
+/*TODO
+1.  Abort for defer objects, which should also abort
+    child defer's built in execution of those objects.
+    Errors that occur while performing a particular
+    defer object should automatically abort child
+    defer objects.
+*/
+
