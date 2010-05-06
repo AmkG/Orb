@@ -46,6 +46,7 @@ check_PROGRAMS =\
 	check-cf\
 	check-bool\
 	check-thread-pool\
+	check-defer\
 	check-seq-iterate
 check_symbols_SOURCES =\
 	check-symbols.c
@@ -63,6 +64,10 @@ check_thread_pool_SOURCES =\
 	check-thread-pool.c
 check_thread_pool_LDADD = liborb.la
 check_thread_pool_LDFLAGS = -static
+check_defer_SOURCES =\
+	check-defer.c
+check_defer_LDADD = liborb.la
+check_defer_LDFLAGS = -static
 check_seq_iterate_SOURCES =\
 	check-seq-iterate.c
 check_seq_iterate_LDADD = liborb.la
