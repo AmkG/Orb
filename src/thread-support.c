@@ -109,7 +109,7 @@ static void** get_tls(Orb_tls_t tls_obj) {
 	if(tls_info == 0) {
 		size = i + 1;
 		data = Orb_gc_malloc(size * sizeof(struct tls_slot_s));
-		tls_info = malloc(2 * sizeof(Orb_t));
+		tls_info = GC_MALLOC_UNCOLLECTABLE(2 * sizeof(Orb_t));
 		Orb_gc_defglobals(tls_info, 2);
 		tls_info[0] = Orb_t_from_integer(size);
 		tls_info[1] = Orb_t_from_pointer(data);
@@ -285,7 +285,7 @@ static void thread_local_cleanup(void* tlsdata) {
 	/*undefine from globality*/
 	if(tlsdata) {
 		Orb_gc_undefglobals(tlsdata, 2);
-		free(tlsdata);
+		Orb_gc_free(tlsdata);
 	}
 }
 
