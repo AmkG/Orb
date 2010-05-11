@@ -271,5 +271,13 @@ Orb_t Orb_defer(Orb_t f) {
     Errors that occur while performing a particular
     defer object should automatically abort child
     defer objects.
+
+2.  Consider instead use of a defer@ form:
+    (defer@ (@f   (one-expression)
+             @f1  (two-expression))
+      (something-that-might-error @f @f1))
+    '@f and '@f1 are otherwise ordinary defers.
+    If 'something-that-might-error throws, then defer@
+    automatically aborts @f and @f1.
 */
 
