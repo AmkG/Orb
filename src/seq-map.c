@@ -107,6 +107,15 @@ static Orb_t map_arr(Orb_t const arr[], size_t start, size_t sz, Orb_t f) {
 	}
 }
 
+/*
+ * core mapping function
+ *
+ * This function works by splitting the sequence, deferring
+ * the left half and continuing working on the right.  The
+ * deferred left half is kept in an explicit stack to avoid
+ * stack overflow.
+ */
+
 Orb_t Orb_map_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
 	Orb_THROW_cc("TODO", "seq!map not yet completed");
 }

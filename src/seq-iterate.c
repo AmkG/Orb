@@ -19,18 +19,12 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #include"liborb.h"
 
 #include"seq.h"
+#include"list.h"
 
 /*
 We implement the core of Orb_EACH here, and use that same
 core to implement s!iterate on sequences
 */
-struct list_s {
-	Orb_t value;
-	struct list_s* next;
-};
-typedef struct list_s list;
-typedef list* list_t;
-
 struct Orb_priv_each_s {
 	Orb_t one_value; /*used for singleton sequences*/
 	Orb_t const* backer; /*keep a reference to the buffer*/
@@ -92,11 +86,7 @@ static void destructure(struct Orb_priv_each_s* es, Orb_t s) {
 			return;
 		case 2:
 			/*two subsequences, push the right one on the stack*/
-			{list_t nn = Orb_gc_malloc(sizeof(list));
-				nn->value = r;
-				nn->next = es->stack;
-				es->stack = nn;
-			}
+			es->stack = list_cons(r, es->stack);
 			/*and go to the left*/
 			s = l;
 		}
