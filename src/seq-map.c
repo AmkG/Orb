@@ -19,8 +19,7 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #include"liborb.h"
 
 #include"seq.h"
-
-/*TODO*/
+#include"list.h"
 
 /*hidden fields*/
 static Orb_t hfield1;
@@ -97,15 +96,18 @@ static Orb_t map_arr(Orb_t const arr[], size_t start, size_t sz, Orb_t f) {
 	SIZE_CASE(6);
 	SIZE_CASE(7);
 	SIZE_CASE(8);
+#		undef SIZE_CASE
 	default: {
 		Orb_t* narr = Orb_gc_malloc(sz * sizeof(Orb_t));
 		Orb_t rv = map_arr_core(narr, arr, start, sz, f);
 		Orb_gc_free(narr);
 		return rv;
 	} break;
-#		undef SIZE_CASE
 	}
 }
+
+/*function to perform deferred core mapping*/
+static Orb_t o_map_core_sf;
 
 /*
  * core mapping function
@@ -114,14 +116,103 @@ static Orb_t map_arr(Orb_t const arr[], size_t start, size_t sz, Orb_t f) {
  * the left half and continuing working on the right.  The
  * deferred left half is kept in an explicit stack to avoid
  * stack overflow.
+ *
+ * When the function's main loop encounters a sequence leaf
+ * (an array-backed sequence, an empty sequence, or a single
+ * element sequence) it then starts working the explicit
+ * stack.
  */
+static Orb_t map_core(Orb_t s, Orb_t f) {
+	Orb_t finalresult;
+	list_t stack = 0;
+	int flag = 1;
 
-Orb_t Orb_map_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
-	Orb_THROW_cc("TODO", "seq!map not yet completed");
+	Orb_t base = Orb_NOTFOUND;
+
+	while(flag) {
+		Orb_t const* arr; size_t start, sz;
+		if(Orb_array_backed(s, &arr, &start, &sz)) {
+			finalresult = map_arr(arr, start, sz, f);
+			flag = 0;
+		} else {
+			Orb_t single, l, r;
+			switch(Orb_seq_decompose(s, &single, &l, &r)) {
+			case 0: { finalresult = s; flag = 0; } break;
+			case 1: {
+				finalresult = Orb_call1(f, single);
+				finalresult = Orb_seq(&finalresult, 1);
+				flag = 0;
+			} break;
+			case 2: {
+				/*create base if necessary*/
+				if(base == Orb_NOTFOUND) {
+					Orb_BUILDER {
+						Orb_B_PARENT(o_map_core_sf);
+						Orb_B_FIELD(hfield1, f);
+					} base = Orb_ENDBUILDER;
+				}
+				/*create function to defer for left side*/
+				Orb_t f0;
+				Orb_BUILDER {
+					Orb_B_PARENT(base);
+					Orb_B_FIELD(hfield2, l);
+				} f0 = Orb_ENDBUILDER;
+				Orb_t df0 = Orb_defer(f0);
+				/*push on stack*/
+				stack = list_cons(df0, stack);
+				/*work on right*/
+				s = r;
+			} break;
+			}
+		}
+	}
+	/*work on remainder*/
+	while(stack) {
+		Orb_t df0 = stack->value;
+		list_t tmp = stack; stack = stack->next; Orb_gc_free(tmp);
+		finalresult = Orb_conc(Orb_call0(df0), finalresult);
+	}
+	return finalresult;
 }
+
+/*
+ * cfunc for map_core() above, wrapping f and s
+ */
+static Orb_t map_core_sf_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 1) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to map-core, expected 0"
+		);
+	}
+
+	Orb_t self = argv[0];
+
+	Orb_t f = Orb_deref(self, hfield1);
+	Orb_t s = Orb_deref(self, hfield2);
+
+	return map_core(s, f);
+}
+
+/*cfunc for map method of sequences*/
+Orb_t Orb_map_cfunc(Orb_t argv[], size_t* pargc, size_t argl) {
+	if(*pargc != 3) {
+		Orb_THROW_cc("apply",
+			"Incorrect number of arguments to map, "
+			"which expects 2 arguments"
+		);
+	}
+
+	Orb_t s = argv[1];
+	Orb_t f = argv[2];
+
+	return map_core(s, f);
+}
+
 void Orb_map_init(void) {
 	Orb_gc_defglobal(&o_apply_fi);
+	Orb_gc_defglobal(&o_map_core_sf);
 
 	o_apply_fi = Orb_t_from_cfunc(&apply_fi_cfunc);
+	o_map_core_sf = Orb_t_from_cfunc(&map_core_sf_cfunc);
 }
 
