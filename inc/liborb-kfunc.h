@@ -54,7 +54,7 @@ longjmp() to reset the stack.
     to explicitly translate methods,
     since there is no equivalent
     Orb_ref_nopropobj().  Method translation
-    requires kchain's.
+    requires kreturn's.
 3.  Local mutable state that is easily
     modelled using a C struct and an opaque
     pointer object in a cfunc must be
@@ -65,7 +65,7 @@ longjmp() to reset the stack.
     the reverse order of creation).
 4.  Functions that really are safe using
     cfunc that are completely unsafe in
-    kfunc's must be handled using kchain's.
+    kfunc's must be handled using kreturn's.
 5.  Probably more inefficient non-tail calls.
     cfunc non-tail calls require a direct
     procedure call, an indirect procedure
@@ -88,7 +88,20 @@ kfunc's, however, have the following advantages:
 3.  Heap-limited non-tail call recursion.
     cfunc non-tail call recursion is limited
     by stack space.  Orb is designed for
-    multithreaded programming/design.
+    multithreaded programming/design.  Thread
+    libraries have a nasty habit of limiting
+    stack space even thought they leave heap
+    space system-limited.
+3.1.  We can implement "threadlets", which are
+    OS threads but having a smaller stack
+    (e.g. 64k instead of the usual 1M).
+    Nowhere near Erlang's 300 bytes starting
+    but much better than typical OS threads.
+    kfunc's will work fine (if less
+    efficiently due to reduced size of Eden)
+    with the reduced stack space.  cfunc's
+    will suffer non-tail recursion depth
+    problems.
 */
 
 struct Orb_ktl_s;
@@ -96,6 +109,96 @@ typedef struct Orb_ktl_s* Orb_ktl_t;
 
 typedef void Orb_kfunc_f(Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl);
 typedef Orb_kfunc_f* Orb_kfunc_t;
+
+/*kfunc calls*/
+/*returns an opaque integer that identifies the type
+of call.  If the returned integer is 0, the call is
+a normal kcall and **ppkf is the Orb_kfunc_f to
+execute.
+*/
+int Orb_kcall_prepare(
+	Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl,
+	Orb_kfunc_t** ppkf
+);
+/*Handle a non-normal kcall*/
+void Orb_kcall_perform(
+	int type,
+	Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl
+);
+
+#define Orb_KCALL(ktl, argv, argc, argl)\
+	do {int Orb_priv_kcall_prepare_type;\
+		Orb_ktl_t Orb_priv_kcall_ktl = (ktl);\
+		Orb_t* Orb_priv_kcall_argv = (argv);\
+		size_t Orb_priv_kcall_argc = (argc);\
+		size_t Orb_priv_kcall_argl = (argl);\
+		Orb_kfunc_t* Orb_priv_kcall_pkf;\
+		Orb_priv_kcall_prepare_type = Orb_kcall_prepare(\
+			Orb_priv_kcall_ktl,\
+			Orb_priv_kcall_argv,\
+			Orb_priv_kcall_argc,\
+			Orb_priv_kcall_argl,\
+			&Orb_priv_kcall_pkf\
+		);\
+		if(Orb_priv_kcall_prepare_type == 0) {\
+			/*slightly cheaper on modern branch-prediction*/\
+			/*microprocessors; the indirect jump at each*/\
+			/*Orb_KCALL is individually given a branch-*/\
+			/*prediction slot, allowing better prediction*/\
+			return (*pkf)(\
+				Orb_priv_kcall_ktl,\
+				Orb_priv_kcall_argv,\
+				Orb_priv_kcall_argc,\
+				Orb_priv_kcall_argl\
+			);\
+		} else {\
+			/*Need to handle*/\
+			return Orb_kcall_perform(\
+				Orb_priv_kcall_prepare_type,\
+				Orb_priv_kcall_ktl,\
+				Orb_priv_kcall_argv,\
+				Orb_priv_kcall_argc,\
+				Orb_priv_kcall_argl\
+			);\
+		}\
+	} while(0)
+
+/*If you know the name of the kfunc that will be called,
+better to use this to compile a direct call.
+*/
+#define Orb_KDIRECTCALL(fname, ktl, argv, argc, argl)\
+	do {int Orb_priv_kcall_prepare_type;\
+		Orb_ktl_t Orb_priv_kcall_ktl = (ktl);\
+		Orb_t* Orb_priv_kcall_argv = (argv);\
+		size_t Orb_priv_kcall_argc = (argc);\
+		size_t Orb_priv_kcall_argl = (argl);\
+		Orb_kfunc_t* Orb_priv_kcall_pkf;\
+		Orb_priv_kcall_prepare_type = Orb_kcall_prepare(\
+			Orb_priv_kcall_ktl,\
+			Orb_priv_kcall_argv,\
+			Orb_priv_kcall_argc,\
+			Orb_priv_kcall_argl,\
+			&Orb_priv_kcall_pkf\
+		);\
+		if(Orb_priv_kcall_prepare_type == 0) {\
+			/*Direct call in the common case*/\
+			return fname(\
+				Orb_priv_kcall_ktl,\
+				Orb_priv_kcall_argv,\
+				Orb_priv_kcall_argc,\
+				Orb_priv_kcall_argl\
+			);\
+		} else {\
+			/*Need to handle*/\
+			return Orb_kcall_perform(\
+				Orb_priv_kcall_prepare_type,\
+				Orb_priv_kcall_ktl,\
+				Orb_priv_kcall_argv,\
+				Orb_priv_kcall_argc,\
+				Orb_priv_kcall_argl\
+			);\
+		}\
+	} while(0)
 
 #ifdef __cplusplus
 }
