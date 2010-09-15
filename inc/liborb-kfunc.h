@@ -200,6 +200,106 @@ better to use this to compile a direct call.
 		}\
 	} while(0)
 
+/*------------------------------------------------------------------ kstate*/
+/*
+facility to emulate "locally-scoped mutable
+variables" in the kfunc calling convention.
+The kstate is a way of attaching a mutable
+state to an orb.  This mutable state is a
+mutable array of Orb_t.
+
+kstate's are initially allocated on Eden
+(the C stack) using the Orb_KALLOC_KSTATE()
+form.  They are then constructed using
+Orb_KALLOC_INIT().
+
+kstate's need to be constructed and
+deconstructed in stack order, i.e. LIFO.
+The most recent kstate must be freed first.
+
+kstate's should be attached to an Eden-
+constructed object using the
+Orb_KB_ATTACH_KSTATE() or Orb_KFB_ATTACH_KSTATE
+forms.  Once attached the individual entries
+of the array are accessed from the constructed
+object via Orb_KSTATE().  kstate's may be
+attached to multiple different objects.  You
+probably want to treat those as in-language
+orbs.
+
+When constructing a kstate you most likely
+need to attach it to a constructed continuation
+that destroys it via Orb_KDEALLOC_DEINIT() on
+its self.
+*/
+/*exposed so we can allocate on C stack*/
+struct Orb_kstate_s {
+	/*kstate's are stack ordered. prev
+	is the previous kstate in the kstate
+	stack.
+	*/
+	struct Orb_kstate_s* prev;
+	/*kstate's are normally allocated on
+	the C stack (i.e. Eden).  This
+	forwarding pointer is the destination
+	when the kstate is moved from Eden to
+	the old generation handled by
+	Orb_gc_*.  It points to itself if it
+	is already in the old generation.
+	*/
+	struct Orb_kstate_s* forwarding;
+	/*actual state*/
+	Orb_t* state;
+	size_t sz;
+	/*for future expansion*/
+	void* reserved;
+};
+typedef struct Orb_kstate_s Orb_kstate;
+typedef Orb_kstate* Orb_kstate_t;
+
+/*private interface*/
+void Orb_priv_kstate_init_v1(Orb_ktl_t ktl,
+	Orb_kstate_t ks, Orb_t* state, size_t sz);
+void Orb_priv_kstate_deinit_v1(Orb_ktl_t ktl,
+	Orb_kstate_t ks);
+Orb_kstate_t Orb_priv_t_as_kstate(Orb_t ob);
+
+/*public interface*/
+/*ks must be the exact name of the Orb_KALLOC_KSTATE-specified
+variable.
+*/
+#define Orb_KSTATE_INIT(ktl, ks)\
+	(Orb_priv_kstate_init_v1(ktl,\
+		ks,\
+		Orb_priv_kstate_state_ ## ks,\
+		Orb_priv_kstate_size_ ## ks))
+#define Orb_KSTATE(ob, i)\
+	(((Orb_priv_t_as_kstate(ob))->state)[i])
+#define Orb_KSTATE_DEINIT(ktl, ob)\
+	(Orb_priv_kstate_deinit_v1(ktl, Orb_priv_t_as_kstate(ob)))
+
+
+/*------------------------------------------------------------------ kalloc*/
+/*
+for all kfunc allocation, sizes must be compile-time constants
+the names must be plain symbols, since they will be attached
+via the ## preprocessor token.
+
+Also, KALLOC's will take up more than 1 C statement.
+*/
+#define Orb_KALLOC_SPACE(nfields) ((nfields) + 2)
+#define Orb_KALLOC_KBUILDER(name, nfields)\
+	Orb_t name;\
+	Orb_t Orb_priv_kb_area_ ## name[Orb_KALLOC_SPACE(nfields)];\
+	size_t Orb_priv_kb_nfields_ ## name = (nfields)
+#define Orb_KALLOC_KFBUILDER(name, nfields)\
+	Orb_KALLOC_KBUILDER(name, ((nfields) + 1))
+#define Orb_KALLOC_KSTATE(name, size)\
+	Orb_kstate Orb_priv_kstate_ ## name;\
+	Orb_kstate_t name = &Orb_priv_kstate_ ## name;\
+	size_t Orb_priv_kstate_sz = (size)
+
+
 #ifdef __cplusplus
 }
 #endif
