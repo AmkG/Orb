@@ -34,6 +34,7 @@ Orb_t increment_common_cf0(void) {
 			tmp, Orb_t_from_integer(itmp)
 		);
 		if(read == tmp) break;
+		tmp = read;
 	}
 	return Orb_NIL;
 }
