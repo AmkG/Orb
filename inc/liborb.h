@@ -81,6 +81,18 @@ Orb_t Orb_deref(Orb_t, Orb_t);
 static inline Orb_t Orb_deref_cc(Orb_t v, char const* str) {
 	return Orb_deref(v, Orb_symbol_cc(str));
 }
+/*like Orb_deref, but does not call propobj's.
+If this function encounters a propobj while performing
+a lookup, it sets *p to that propobj and returns
+Orb_NOTFOUND.
+If this function did a normal lookup, it sets *p to
+Orb_NOTFOUND instead.
+*/
+Orb_t Orb_deref_nopropobj(Orb_t, Orb_t, Orb_t* p);
+static inline Orb_t Orb_deref_nopropobj_cc(
+			Orb_t v, char const* str, Orb_t* p) {
+	return Orb_deref_nopropobj()
+}
 
 extern Orb_t Orb_NIL;
 extern Orb_t Orb_TRUE;

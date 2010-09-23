@@ -532,19 +532,34 @@ Object referencing
 ----------------------------------------------------------------------------*/
 
 Orb_t Orb_deref(Orb_t obj, Orb_t field) {
+	Orb_t tmp;
+	Orb_t rv = Orb_deref_nopropobj(obj, field, &tmp);
+	if(field == Orb_NOTFOUND) {
+		return rv;
+	} else {
+		return Orb_call2(
+			tmp,
+			Orb_t_from_integer(1),
+			field
+		);
+	}
+}
+
+Orb_t Orb_deref_nopropobj(Orb_t obj, Orb_t field, Orb_t* p) {
 	Orb_t* a; Orb_t* format;
 	size_t numfields;
 	Orb_t parent;
 	int found; size_t index;
+
+	*p = Orb_NOTFOUND;
+
 top:
 	obj = translate_object(obj);
 	if(Orb_t_is_propertyfunction(obj)) {
 		/*property-function*/
 		Orb_t* innerfunc = Orb_t_as_pointer(obj);
-		return Orb_call2(innerfunc[0],
-			Orb_t_from_integer(1),
-			field
-		);
+		*p = innerfunc[0];
+		return Orb_NOTFOUND
 	}
 	a = Orb_t_as_pointer(obj);
 	format = Orb_t_as_pointer(a[0]);
