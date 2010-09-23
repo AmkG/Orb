@@ -297,7 +297,7 @@ Also, KALLOC's will take up more than 1 C statement.
 #define Orb_KALLOC_KSTATE(name, size)\
 	Orb_kstate Orb_priv_kstate_ ## name;\
 	Orb_kstate_t name = &Orb_priv_kstate_ ## name;\
-	size_t Orb_priv_kstate_sz = (size)
+	size_t Orb_priv_kstate_sz_ ## name = (size)
 
 
 #ifdef __cplusplus
