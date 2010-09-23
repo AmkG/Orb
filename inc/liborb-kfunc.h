@@ -262,7 +262,6 @@ void Orb_priv_kstate_init_v1(Orb_ktl_t ktl,
 	Orb_kstate_t ks, Orb_t* state, size_t sz);
 void Orb_priv_kstate_deinit_v1(Orb_ktl_t ktl,
 	Orb_kstate_t ks);
-Orb_kstate_t Orb_priv_t_as_kstate(Orb_t ob);
 
 /*public interface*/
 /*ks must be the exact name of the Orb_KALLOC_KSTATE-specified
@@ -273,11 +272,12 @@ variable.
 		ks,\
 		Orb_priv_kstate_state_ ## ks,\
 		Orb_priv_kstate_size_ ## ks))
-#define Orb_KSTATE(ob, i)\
-	(((Orb_priv_t_as_kstate(ob))->state)[i])
 #define Orb_KSTATE_DEINIT(ktl, ob)\
 	(Orb_priv_kstate_deinit_v1(ktl, Orb_priv_t_as_kstate(ob)))
-
+Orb_kstate_t Orb_kstate_get(Orb_t ob);
+static inline Orb_t Orb_kstate_ind(Orb_kstate_t ks, size_t i) {
+	return ks->state[i];
+}
 
 /*------------------------------------------------------------------ kalloc*/
 /*
