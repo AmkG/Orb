@@ -19,7 +19,7 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LIBORB_KFUNC_H
 #define LIBORB_KFUNC_H
 
-#include"liborb.h"
+#include<liborb.h>
 
 #if defined(_MSC_VER) && (_MSC_VER>=1200)
 # pragma once

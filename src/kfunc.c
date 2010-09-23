@@ -22,6 +22,7 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #include"thread-support.h"
 
 #include<stdio.h>
+#include<string.h>
 
 struct Orb_ktl_s {
 	/*Cheney on the MTA*/
@@ -54,14 +55,14 @@ static Orb_t handle_kf(Orb_ktl_t, Orb_t argv[], size_t* pargc, size_t argl,
 );
 static Orb_t kfunc_cf(Orb_t argv[], size_t* pargc, size_t argl) {
 	struct Orb_ktl_s sktl;
-	memset(&sktl, sizeof(struct Orb_ktl_s), 0);
+	memset((void*)&sktl, 0, sizeof(struct Orb_ktl_s));
 	Orb_kstate_t save_kstate = (Orb_kstate_t) Orb_tls_get(kstate_tls);
 	sktl.kstate = save_kstate;
 	sktl.kstate_in_tls = save_kstate;
 
 	Orb_t rv;
 
-	Orb_TRY(E) {
+	Orb_TRY {
 		rv = handle_kf(&sktl, argv, pargc, argl, save_kstate);
 		Orb_tls_set(kstate_tls, save_kstate);
 	} Orb_CATCH(E) {
@@ -196,13 +197,13 @@ static Orb_t handle_kf(
 		/*make sure that the current kstate is the same
 		as the saved kstate.
 		*/
-		if(ktl->kstate != saved_kstate) {
+		if(ktl->kstate != save_kstate) {
 			Orb_THROW_cc( "kfunc-kstate-2",
 				"a kstate was not freed "
 				"before returning a value."
 			);
 		}
-		update_kstate();
+		update_kstate(ktl);
 		return ktl->retval;
 	} break;
 	}
