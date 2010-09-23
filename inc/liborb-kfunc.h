@@ -279,6 +279,68 @@ static inline Orb_t Orb_kstate_ind(Orb_kstate_t ks, size_t i) {
 	return ks->state[i];
 }
 
+/*----------------------------------------------------------------- kreturn*/
+/*
+Facility to handle return values from certain
+kfunc-specific versions of particular functions
+that can be troublesome in kfunc's.
+
+For example, as mentioned before kfunc's cannot
+safely use Orb_ref()/Orb_deref() for arbitrary
+objects, due to propobj's possibly being
+implemented by cfunc's.  Thus we need to use
+Orb_kref()/Orb_kderef() for general access.
+Orb_kref()/Orb_kderef() require kreturns
+in order to be able to provide a return
+value:
+
+void main_func(Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
+	Orb_kreturn(ktl, argv, argc, argl, &kont_func);
+	Orb_kref(ktl, ob, field);
+}
+void kont_func(Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
+	Orb_t value = Orb_kreturn_value(ktl);
+	argv[0] = argv[1];
+	argv[1] = value;
+	Orb_KCALL(ktl, argv, 2, argl);
+}
+
+kreturn's are single use only, and only one
+can be constructed at a time.  It is
+automatically destructed/freed when the return
+value is provided.
+
+The targeted return function will have either
+the same argv, or a copy (if a minor GC was
+triggered).  The length of this argv is always
+at least the original given argl.
+*/
+void Orb_kreturn(Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl,
+	Orb_kfunc_t func
+);
+Orb_t Orb_kreturn_value(Orb_ktl_t ktl);
+
+/*some functions with kreturn variants*/
+/*these call functions are much like the cfunc
+Orb_call()/Orb_call_ex() functions.
+*/
+void Orb_kreturn_call_ex(
+	Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl
+);
+static inline void Orb_kreturn_call(
+		Orb_ktl_t ktl, Orb_t argv[], size_t argc) {
+	return Orb_kreturn_call_ex(ktl, argv, argc, argc);
+}
+/*deref and ref*/
+void Orb_kderef(Orb_ktl_t ktl, Orb_t ob, Orb_t field);
+void Orb_kref(Orb_ktl_t ktl, Orb_t ob, Orb_t field);
+static inline void Orb_kderef_cc(Orb_ktl_t ktl, Orb_t ob, char const* str) {
+	return Orb_kderef(ktl, ob, Orb_symbol_cc(str));
+}
+static inline void Orb_kref_cc(Orb_ktl_t ktl, Orb_t ob, char const* str) {
+	return Orb_kref(ktl, ob, Orb_symbol_cc(str));
+}
+
 /*------------------------------------------------------------------ kalloc*/
 /*
 for all kfunc allocation, sizes must be compile-time constants
