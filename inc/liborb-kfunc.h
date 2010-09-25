@@ -112,6 +112,8 @@ typedef struct Orb_ktl_s* Orb_ktl_t;
 typedef void Orb_kfunc_f(Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl);
 typedef Orb_kfunc_f* Orb_kfunc_t;
 
+Orb_t Orb_t_from_kfunc(Orb_kfunc_t);
+
 /*kfunc calls*/
 /*returns an opaque integer that identifies the type
 of call.  If the returned integer is 0, the call is
