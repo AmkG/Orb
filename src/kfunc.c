@@ -24,6 +24,8 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #include<stdio.h>
 #include<string.h>
 
+#include<assert.h>
+
 /*stack limit for Cheney on the MTA recursion*/
 #define STACK_LIMIT 262144 /*256k*/
 
@@ -250,6 +252,13 @@ int Orb_kcall_prepare(
 	Orb_kfunc_t* pkf = Orb_t_as_pointer(v);
 	*ppkf = pkf;
 	return 0;
+}
+
+void Orb_kcall_perform(
+		int type,
+		Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
+	assert(type != 0);
+	/*TODO*/
 }
 
 void Orb_kfunc_init(void) {
