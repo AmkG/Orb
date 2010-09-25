@@ -91,7 +91,7 @@ Orb_NOTFOUND instead.
 Orb_t Orb_deref_nopropobj(Orb_t, Orb_t, Orb_t* p);
 static inline Orb_t Orb_deref_nopropobj_cc(
 			Orb_t v, char const* str, Orb_t* p) {
-	return Orb_deref_nopropobj()
+	return Orb_deref_nopropobj(v, Orb_symbol_cc(str), p);
 }
 
 extern Orb_t Orb_NIL;

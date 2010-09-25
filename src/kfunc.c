@@ -243,7 +243,7 @@ int Orb_kcall_prepare(
 		stack_size = cstart - cend;
 	}
 
-	if(stack_size >= stack_limit) {
+	if(stack_size >= STACK_LIMIT) {
 		return REASON_KCALL;
 	}
 
