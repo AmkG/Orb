@@ -24,6 +24,11 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #include<stdio.h>
 #include<string.h>
 
+/*stack limit for Cheney on the MTA recursion*/
+#define STACK_LIMIT 262144 /*256k*/
+
+/*stack-based thread-local for kfunc*/
+
 struct Orb_ktl_s {
 	/*Cheney on the MTA*/
 	jmp_buf empire_state_building;
@@ -207,6 +212,44 @@ static Orb_t handle_kf(
 		return ktl->retval;
 	} break;
 	}
+}
+
+int Orb_kcall_prepare(
+		Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl,
+		Orb_kfunc_t** ppkf) {
+	/*first check for a return to cfunc*/
+	if(argv[0] == CFUNC_KONTINUE) {
+		return REASON_RETURN;
+	}
+	/*now check if it's a straightforward kfunc call.  if not, REASON_CFUNC*/
+	Orb_t v;
+	Orb_t p;
+	v = Orb_deref_nopropobj(argv[0], hf_kfunc, &p);
+	if(p != Orb_NOTFOUND || v == Orb_NOTFOUND) {
+		return REASON_CFUNC;
+	}
+
+	/*now determine stack size*/
+	void* start;
+	void* end;
+	start = (void*) ktl;
+	end = (void*) &end;
+	char* cstart = (char*) start;
+	char* cend = (char*) end;
+	size_t stack_size;
+	if(cstart < cend) {
+		stack_size = cend - cstart;
+	} else {
+		stack_size = cstart - cend;
+	}
+
+	if(stack_size >= stack_limit) {
+		return REASON_KCALL;
+	}
+
+	Orb_kfunc_t* pkf = Orb_t_as_pointer(v);
+	*ppkf = pkf;
+	return 0;
 }
 
 void Orb_kfunc_init(void) {
