@@ -24,6 +24,8 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 
 #include<string.h>
 
+#include<assert.h>
+
 /*----------------------------------------------------------------------------
 Initializers
 ----------------------------------------------------------------------------*/
@@ -694,4 +696,76 @@ static Orb_t bound_method_invoke(Orb_t argv[], size_t* pargc, size_t argl) {
 		return Orb_call(nargv, (*pargc) + 1);
 	}
 }
+
+/*----------------------------------------------------------------------------
+Object moving (used by kfunc's for evacuation).
+----------------------------------------------------------------------------*/
+
+/*
+Evacuates an object, creating a precise clone of that object
+elsewhere.
+Return 1 if the object was moved this time, or 0 if not moved.
+*/
+int Orb_evacuate_object(Orb_t* ptarget, Orb_t v) {
+	assert(Orb_t_is_object(v));
+
+	/*get the memory area*/
+	Orb_t* arr = Orb_t_as_pointer(v);
+	/*forwarding pointer already?*/
+	if(Orb_t_is_object(arr[0])) {
+		*ptarget = arr[0];
+		return 0;
+	}
+	/*have to alloc*/
+
+	/*count the size*/
+	Orb_t oformat = arr[0];
+	Orb_t* farr = Orb_t_as_pointer(oformat);
+	Orb_t osize = farr[0];
+	size_t size = Orb_t_as_integer(osize);
+
+	/*alloc*/
+	Orb_t* rvarr = Orb_gc_malloc((size + 2) * sizeof(Orb_t));
+	/*clone*/
+	memcpy(rvarr, arr, (size + 1) * sizeof(Orb_t));
+	/*clear child formats field*/
+	rvarr[size + 1] = Orb_NOTFOUND;
+
+	*ptarget = ((Orb_t) rvarr) + 0x01;
+	return 1;
+}
+
+/* Given an object, evacuate the fields of the object,
+IF the field value returns 1 for the given predicate.
+inform is also called, given the results of the return
+values of Orb_evacuate_object.
+*/
+void Orb_evacuate_fields(Orb_t v,
+		int pred(Orb_t, void*), void* pred_clos,
+		void inform(int, Orb_t, void*), void* inform_clos) {
+	assert(Orb_t_is_object(v));
+
+	/*get the memory area*/
+	Orb_t* arr = Orb_t_as_pointer(v);
+	/*count the size*/
+	Orb_t oformat = arr[0];
+	Orb_t* farr = Orb_t_as_pointer(oformat);
+	Orb_t osize = farr[0];
+	size_t size = Orb_t_as_integer(osize);
+
+	/*traverse the objects*/
+	size_t i;
+	for(i = 0; i < size; ++i) {
+		Orb_t field_value = arr[i + 1];
+		if(pred(field_value, pred_clos)) {
+			Orb_t new_val;
+			int res = Orb_evacuate_object(field_value, &new_val);
+			arr[i + 1] = new_val;
+			inform(res, new_val, inform_clos);
+		}
+	}
+}
+
+
+
 

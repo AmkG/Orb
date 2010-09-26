@@ -34,6 +34,15 @@ This function requires that:
 */
 Orb_t Orb_method_assured(Orb_t);
 
+/*used in a simple copying collector (i.e. the kfunc calling
+convention)
+*/
+int Orb_evacuate_object(Orb_t* ptarget, Orb_t v);
+void Orb_evacuate_fields(Orb_t v,
+		int pred(Orb_t,void*), void* pred_clos,
+		void inform(int, Orb_t, void*), void* inform_clos);
+
+/*initialization*/
 void Orb_object_init_before_symbol(void);
 void Orb_object_init_after_symbol(void);
 
