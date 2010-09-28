@@ -254,11 +254,36 @@ int Orb_kcall_prepare(
 	return 0;
 }
 
+
+
+/*performs a kcall that requires a longjmp() back to the
+trampoline.
+*/
 void Orb_kcall_perform(
 		int type,
 		Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
 	assert(type != 0);
-	/*TODO*/
+	switch(type) {
+	case REASON_KCALL:
+	case REASON_CFUNC: {
+		Orb_t* nargv = evacuate_stack(ktl, argv, argc, argl);
+		ktl->argv = nargv;
+		ktl->argc = argc;
+		ktl->argl = argl;
+	} break;
+	case REASON_RETURN: {
+		/*only evacuate the actual return value if available*/
+		if(argc > 1) {
+			Orb_t* nargv = evacuate_stack(ktl, &argv[1], 1, 1);
+			ktl->retval = *nargv;
+			Orb_gc_free(nargv);
+		} else {
+			ktl->retval = Orb_NIL;
+		}
+		ktl->argv = 0;
+	} break;
+	}
+	longjmp(ktl->empire_state_building, type);
 }
 
 void Orb_kfunc_init(void) {
