@@ -735,14 +735,12 @@ int Orb_evacuate_object(Orb_t* ptarget, Orb_t v) {
 	return 1;
 }
 
-/* Given an object, evacuate the fields of the object,
-IF the field value returns 1 for the given predicate.
-inform is also called, given the results of the return
-values of Orb_evacuate_object.
+/* Given an object, iterate over each direct field of
+the object and replace each with the result of the 
+trans function, given the trans_clos parameter.
 */
 void Orb_evacuate_fields(Orb_t v,
-		int pred(Orb_t, void*), void* pred_clos,
-		void inform(int, Orb_t, void*), void* inform_clos) {
+		Orb_t (*trans)(Orb_t, Orb_t, void*), void* trans_clos) {
 	assert(Orb_t_is_object(v));
 
 	/*get the memory area*/
@@ -756,13 +754,9 @@ void Orb_evacuate_fields(Orb_t v,
 	/*traverse the objects*/
 	size_t i;
 	for(i = 0; i < size; ++i) {
-		Orb_t field_value = arr[i + 1];
-		if(pred(field_value, pred_clos)) {
-			Orb_t new_val;
-			int res = Orb_evacuate_object(field_value, &new_val);
-			arr[i + 1] = new_val;
-			inform(res, new_val, inform_clos);
-		}
+		Orb_t value = arr[i + 1];
+		Orb_t field = farr[i + 1];
+		arr[i + 1] = trans(field, value, trans_clos);
 	}
 }
 

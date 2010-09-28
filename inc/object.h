@@ -39,8 +39,7 @@ convention)
 */
 int Orb_evacuate_object(Orb_t* ptarget, Orb_t v);
 void Orb_evacuate_fields(Orb_t v,
-		int pred(Orb_t,void*), void* pred_clos,
-		void inform(int, Orb_t, void*), void* inform_clos);
+		Orb_t (*trans)(Orb_t, Orb_t, void*), void* trans_clos);
 
 /*initialization*/
 void Orb_object_init_before_symbol(void);
