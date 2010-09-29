@@ -268,7 +268,17 @@ int Orb_kcall_prepare(
 	return 0;
 }
 
-
+/*evacuates live objects from the stack (Eden).  Live objects
+are in the argv[] vector, from argv[0] to argv[argc - 1].
+Returns a newly-allocated argv vector.
+*/
+Orb_t* evacuate_stack(Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
+	/*step 1: determine stack limits*/
+	/*step 2: evacuate links of kstate chain that are on stack (Eden)*/
+	/*step 3: evacuate objects accessible from the kstate chain*/
+	/*step 4: evacuate objects accessible from the argv vector*/
+	/*step 5: traverse and empty gray set*/
+}
 
 /*performs a kcall that requires a longjmp() back to the
 trampoline.
