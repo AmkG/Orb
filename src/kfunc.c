@@ -30,7 +30,6 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #define STACK_LIMIT 262144 /*256k*/
 
 /*stack-based thread-local for kfunc*/
-
 struct Orb_ktl_s {
 	/*Cheney on the MTA*/
 	jmp_buf empire_state_building;
@@ -40,6 +39,8 @@ struct Orb_ktl_s {
 	Orb_t* argv;
 	size_t argc;
 	size_t argl;
+	/*recorded return point for kreturn's*/
+	Orb_kfunc_t retpoint;
 	/*start of kstate chain*/
 	Orb_kstate_t kstate;
 	/*the current kstate in the thread-local pointer.
@@ -50,6 +51,19 @@ struct Orb_ktl_s {
 	*/
 	Orb_kstate_t kstate_in_tls;
 };
+
+/*structure used by constructed kontinuations to handle
+kreturn's that require calling another function.
+*/
+struct kreturn_kont_s {
+	Orb_kfunc_t retpoint;
+	Orb_ktl_t ktl;
+	Orb_t* argv;
+	size_t argc;
+	size_t argl;
+};
+typedef struct kreturn_kont_s kreturn_kont;
+typedef kreturn_kont* kreturn_kont_t;
 
 /*thread-local pointer to most recent kstate from
 a kfunc-to-cfunc call.
