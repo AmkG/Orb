@@ -156,7 +156,7 @@ static Orb_t handle_kf(
 			if(ktl->kstate != save_kstate) {
 				Orb_THROW_cc("kfunc-kstate-1",
 					"a kstate was not freed "
-					"before returning to a cfunc "
+					"before returning via a cfunc "
 					"in tail position."
 				);
 			}
