@@ -313,11 +313,61 @@ int Orb_kcall_prepare(
 	return 0;
 }
 
+/*-----------------------------------------------------------------------------
+Eden Evacuation
+-----------------------------------------------------------------------------*/
+
+/*for maintaining the gray set*/
+struct gray_list_s {
+	Orb_t ob;
+	struct gray_list_s* next;
+};
+typedef struct gray_list_s gray_list;
+
+struct ee_main_s {
+	/*stack limits. start < end*/
+	uintptr_t start;
+	uintptr_t end;
+	/*remaining object to scan*/
+	gray_list* gray_set;
+};
+typedef struct ee_main_s ee_main;
+
+/*accepts an object, then returns the object that should
+replace it, or the same object if no replacement
+necessary.
+*/
+static Orb_t evac_value(ee_main* ee, Orb_t orig) {
+	/*for non-objects, return*/
+	if(!Orb_t_is_object(orig)) {
+		return orig;
+	}
+	/*object.  So check if in stack*/
+	void* vp = Orb_t_as_pointer(orig);
+	uintptr_t ui = (uintptr_t) vp;
+	if(ee->start < ui && ui < ee->end) {
+		/*evacuate, evacuate, foop foop*/
+		Orb_t rv;
+		int check = Orb_evacuate_object(&rv, orig);
+		if(check) {
+			/*first time the object is evacuated*/
+			gray_list* ngray = Orb_gc_malloc(sizeof(gray_list));
+			ngray->ob = rv;
+			ngray->next = ee->gray_set;
+			ee->gray_set = ngray;
+		}
+		return rv;
+	} else {
+		return orig;
+	}
+}
+
 /*evacuates live objects from the stack (Eden).  Live objects
 are in the argv[] vector, from argv[0] to argv[argc - 1].
 Returns a newly-allocated argv vector.
 */
-Orb_t* evacuate_stack(Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
+static Orb_t* evacuate_stack(
+		Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
 	/*step 1: determine stack limits*/
 	/*step 2: evacuate links of kstate chain that are on stack (Eden)*/
 	/*step 3: evacuate objects accessible from the kstate chain*/
