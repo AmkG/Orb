@@ -50,6 +50,10 @@ struct Orb_ktl_s {
 	need to update the tls.
 	*/
 	Orb_kstate_t kstate_in_tls;
+	/*the kstate attached to the current function, if
+	there is one.
+	*/
+	Orb_kstate_t attached;
 };
 
 /*structure used by constructed kontinuations to handle
@@ -98,6 +102,8 @@ static Orb_t kfunc_cf(Orb_t argv[], size_t* pargc, size_t argl) {
 static Orb_t CFUNC_KONTINUE;
 /*special hidden field for kfunc pointers*/
 static Orb_t hf_kfunc;
+/*special hidden field for kstate attachments*/
+static Orb_kstate_t hs_kstate;
 
 /*get the kfunc of a kfunc-object*/
 static Orb_kfunc_t get_kf(Orb_t ob) {
@@ -105,6 +111,12 @@ static Orb_kfunc_t get_kf(Orb_t ob) {
 	if(rv == Orb_NOTFOUND) return 0;
 	Orb_kfunc_t* ppf = Orb_t_as_pointer(rv);
 	return *ppf;
+}
+/*get an attached kstate*/
+static Orb_kstate_t get_ks(Orb_t ob) {
+	Orb_t rv = Orb_deref(ob, hf_kstate);
+	if(rv == Orb_NOTFOUND) return 0;
+	return Orb_t_as_pointer(rv);
 }
 /*update the kstate in the TLS, but only if needed*/
 static void update_kstate(Orb_ktl_t ktl) {
@@ -119,6 +131,7 @@ static void update_kstate(Orb_ktl_t ktl) {
 #define REASON_KCALL 1 /*minor GC triggered, bounce back in*/
 #define REASON_CFUNC 2 /*need to bounce to a cfunc being called*/
 #define REASON_RETURN 3 /*return to the calling cfunc*/
+#define REASON_NOPROPOBJ 4 /*call to property object*/
 
 static Orb_t handle_kf(
 		Orb_ktl_t ktl, Orb_t argv[], size_t* pargc, size_t argl,
@@ -129,6 +142,7 @@ static Orb_t handle_kf(
 		size_t argc = *pargc;
 
 		Orb_kfunc_t kf = get_kf(argv[0]);
+		ktl->attached = get_ks(argv[0]);
 
 		/*need space for extra CFUNC_KONTINUE.  Create space if
 		needed.
@@ -156,11 +170,14 @@ static Orb_t handle_kf(
 		Orb_t* cur_argv = ktl->argv;
 		/*just bounce back*/
 		Orb_kfunc_t kf = get_kf(cur_argv[0]);
+		/*get any kstate*/
+		ktl->attached = get_ks(cur_argv[0]);
 		/*prevent ktl from keeping a reference to argv*/
 		ktl->argv = 0;
 		kf(ktl, cur_argv, ktl->argc, ktl->argl);
 		return Orb_NIL;
 	} break;
+	cfunc_call:
 	case REASON_CFUNC: {
 		Orb_t* cur_argv = ktl->argv;
 		size_t cur_argc = ktl->argc;
@@ -229,6 +246,17 @@ static Orb_t handle_kf(
 		update_kstate(ktl);
 		return ktl->retval;
 	} break;
+	case REASON_NOPROPOBJ: {
+		/*access propobj safely here*/
+		Orb_kfunc_t kf = get_kf(ktl->argv[0]);
+		if(kf) {
+			/*kfunc's may be continuations*/
+			goto kcall_call;
+		} else {
+			/*cfunc's should never be used for continuations*/
+			goto cfunc_call;
+		}
+	} break;
 	}
 }
 
@@ -243,8 +271,23 @@ int Orb_kcall_prepare(
 	Orb_t v;
 	Orb_t p;
 	v = Orb_deref_nopropobj(argv[0], hf_kfunc, &p);
-	if(p != Orb_NOTFOUND || v == Orb_NOTFOUND) {
+	if(p != Orb_NOTFOUND) {
+		return REASON_NOPROPOBJ;
+	}
+	if(v == Orb_NOTFOUND) {
 		return REASON_CFUNC;
+	}
+
+	/*search for any attached kstate*/
+	Orb_t ksv;
+	ksv = Orb_deref_nopropobj(argv[0], hf_kstate, &p);
+	if(p != Orb_NOTFOUND) {
+		return REASON_NOPROPOBJ;
+	}
+	if(ksv == Orb_NOTFOUND) {
+		ktl->attached = 0;
+	} else {
+		ktl->attached = Orb_t_as_pointer(ksv);
 	}
 
 	/*now determine stack size*/
@@ -290,6 +333,7 @@ void Orb_kcall_perform(
 		Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
 	assert(type != 0);
 	switch(type) {
+	case REASON_NOPROPOBJ:
 	case REASON_KCALL:
 	case REASON_CFUNC: {
 		Orb_t* nargv = evacuate_stack(ktl, argv, argc, argl);
