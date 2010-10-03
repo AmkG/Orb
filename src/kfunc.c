@@ -352,6 +352,9 @@ void Orb_kcall_perform(
 		}
 		ktl->argv = 0;
 	} break;
+	default: {
+		assert(type);
+	} break;
 	}
 	longjmp(ktl->empire_state_building, type);
 }
