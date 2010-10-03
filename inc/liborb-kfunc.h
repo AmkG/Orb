@@ -278,10 +278,8 @@ variable.
 		Orb_priv_kstate_size_ ## ks))
 #define Orb_KSTATE_DEINIT(ktl, ob)\
 	(Orb_priv_kstate_deinit_v1(ktl, Orb_priv_t_as_kstate(ob)))
-Orb_kstate_t Orb_kstate_get(Orb_t ob);
-static inline Orb_t Orb_kstate_ind(Orb_kstate_t ks, size_t i) {
-	return ks->state[i];
-}
+Orb_kstate_t Orb_kstate_get(Orb_ktl_t ktl);
+#define Orb_kstate_ind(ks, i) ((ks)->state[i])
 
 /*----------------------------------------------------------------- kreturn*/
 /*
