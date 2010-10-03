@@ -368,8 +368,40 @@ Returns a newly-allocated argv vector.
 */
 static Orb_t* evacuate_stack(
 		Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
+	ee_main ees;
+	ees.gray_set = 0;
+
 	/*step 1: determine stack limits*/
+	ees.start = (uintptr_t) ktl;
+	ees.end = (uintptr_t) (void*) &ees;
+	if(ees.start > ees.end) {
+		/*swap if necessary*/
+		uintptr_t tmp = ees.start;
+		ees.start = ees.end;
+		ees.end = tmp;
+	}
+
 	/*step 2: evacuate links of kstate chain that are on stack (Eden)*/
+	{Orb_kstate_t* ppt;
+		ppt = &ktl->kstate;
+		/*kstate's without forwarding pointers are not yet evacuated*/
+		while(*ppt && ((*ppt)->forwarding == 0)) {
+			Orb_kstate_t pt = *ppt;
+			Orb_kstate_t npt = Orb_gc_malloc(sizeof(Orb_kstate));
+
+			npt->prev = pt->prev;
+			npt->forwarding = npt;
+			pt->forwarding = npt;
+
+			npt->state = Orb_gc_malloc(pt->sz * sizeof(Orb_t));
+			memcpy(npt->state, pt->state, pt->sz * sizeof(Orb_t));
+			npt->sz = pt->sz;
+
+			*ppt = npt;
+			ppt = &npt->prev;
+		}
+	}
+
 	/*step 3: evacuate objects accessible from the kstate chain*/
 	/*step 4: evacuate objects accessible from the argv vector*/
 	/*step 5: traverse and empty gray set*/
