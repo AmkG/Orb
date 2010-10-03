@@ -362,6 +362,13 @@ static Orb_t evac_value(ee_main* ee, Orb_t orig) {
 	}
 }
 
+/*accepts the field and value of the object, then returns a new
+replacement value for that field.
+*/
+static Orb_t evac_field(Orb_t field, Orb_t value, void* vp) {
+	ee_main* ee = (ee_main*) vp;
+}
+
 /*evacuates live objects from the stack (Eden).  Live objects
 are in the argv[] vector, from argv[0] to argv[argc - 1].
 Returns a newly-allocated argv vector.
@@ -370,6 +377,7 @@ static Orb_t* evacuate_stack(
 		Orb_ktl_t ktl, Orb_t argv[], size_t argc, size_t argl) {
 	ee_main ees;
 	ees.gray_set = 0;
+	ee_main* ee = &ees;
 
 	/*step 1: determine stack limits*/
 	ees.start = (uintptr_t) ktl;
@@ -403,8 +411,37 @@ static Orb_t* evacuate_stack(
 	}
 
 	/*step 3: evacuate objects accessible from the kstate chain*/
+	{Orb_kstate_t ks;
+		ks = ktl->kstate;
+		while(ks) {
+			size_t i;
+			for(i = 0; i < ks->sz; ++i) {
+				ks->state[i] = evac_value(ee, ks->state[i]);
+			}
+
+			ks = ks->prev;
+		}
+	}
+
 	/*step 4: evacuate objects accessible from the argv vector*/
+	Orb_t* rv = Orb_gc_malloc(argl * sizeof(Orb_t));
+	{size_t i;
+		for(i = 0; i < argc; ++i) {
+			rv[i] = evac_value(ee, argv[i]);
+		}
+	}
+
 	/*step 5: traverse and empty gray set*/
+	while(ee->gray_set) {
+		gray_list* g = ee->gray_set;
+		Orb_t ob = g->ob;
+		ee->gray_set = g->next;
+		Orb_gc_free((void*) g);
+
+		Orb_evacuate_fields(ob, &evac_fields, ee);
+	}
+
+	return rv;
 }
 
 /*performs a kcall that requires a longjmp() back to the
