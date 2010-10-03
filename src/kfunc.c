@@ -101,7 +101,9 @@ static Orb_t hf_kfunc;
 
 /*get the kfunc of a kfunc-object*/
 static Orb_kfunc_t get_kf(Orb_t ob) {
-	Orb_kfunc_t* ppf = Orb_t_as_pointer(Orb_deref(ob, hf_kfunc));
+	Orb_t rv = Orb_deref(ob, hf_kfunc);
+	if(rv == Orb_NOTFOUND) return 0;
+	Orb_kfunc_t* ppf = Orb_t_as_pointer(rv);
 	return *ppf;
 }
 /*update the kstate in the TLS, but only if needed*/
