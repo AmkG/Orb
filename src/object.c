@@ -561,7 +561,7 @@ top:
 		/*property-function*/
 		Orb_t* innerfunc = Orb_t_as_pointer(obj);
 		*p = innerfunc[0];
-		return Orb_NOTFOUND
+		return Orb_NOTFOUND;
 	}
 	a = Orb_t_as_pointer(obj);
 	format = Orb_t_as_pointer(a[0]);
