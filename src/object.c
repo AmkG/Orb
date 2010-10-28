@@ -536,7 +536,7 @@ Object referencing
 Orb_t Orb_deref(Orb_t obj, Orb_t field) {
 	Orb_t tmp;
 	Orb_t rv = Orb_deref_nopropobj(obj, field, &tmp);
-	if(field == Orb_NOTFOUND) {
+	if(tmp == Orb_NOTFOUND) {
 		return rv;
 	} else {
 		return Orb_call2(
