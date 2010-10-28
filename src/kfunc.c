@@ -103,7 +103,7 @@ static Orb_t CFUNC_KONTINUE;
 /*special hidden field for kfunc pointers*/
 static Orb_t hf_kfunc;
 /*special hidden field for kstate attachments*/
-static Orb_kstate_t hs_kstate;
+static Orb_t hf_kstate;
 
 /*get the kfunc of a kfunc-object*/
 static Orb_kfunc_t get_kf(Orb_t ob) {
@@ -438,7 +438,7 @@ static Orb_t* evacuate_stack(
 		ee->gray_set = g->next;
 		Orb_gc_free((void*) g);
 
-		Orb_evacuate_fields(ob, &evac_fields, ee);
+		Orb_evacuate_fields(ob, &evac_field, ee);
 	}
 
 	return rv;
