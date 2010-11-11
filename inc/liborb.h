@@ -40,13 +40,13 @@ tags:
 	00 = integer
 	01 = standard object (see object.c for details)
 	10 = generic void* (object to point to must be word-aligned)
-	11 = property-object (same as standard object, but
-			treated as a lookup function in deref
-			and fields)
 */
+#define Orb_TAG_INTEGER 0
+#define Orb_TAG_OBJECT 1
+#define Orb_TAG_POINTER 2
 
 static inline int Orb_t_is_integer(Orb_t x) {
-	return ((x) & 0x03) == 0;
+	return ((x) & 0x03) == Orb_TAG_INTEGER;
 }
 static inline int Orb_t_as_integer(Orb_t x) {
 	return x >> 2;
@@ -56,17 +56,17 @@ static inline Orb_t Orb_t_from_integer(int x) {
 }
 
 static inline int Orb_t_is_pointer(Orb_t x) {
-	return ((x) & 0x03) == 2;
+	return ((x) & 0x03) == Orb_TAG_POINTER;
 }
 static inline void* Orb_t_as_pointer(Orb_t x) {
 	return (void*) (x & ~((Orb_t) 0x03));
 }
 static inline Orb_t Orb_t_from_pointer(void* x) {
-	return ((Orb_t) (x)) + 2;
+	return ((Orb_t) (x)) + Orb_TAG_POINTER;
 }
 
 static inline int Orb_t_is_object(Orb_t x) {
-	return ((x) & 0x03) == 1;
+	return ((x) & 0x03) == Orb_TAG_OBJECT;
 }
 
 Orb_t Orb_symbol_sz(char const* str, size_t sz);
@@ -275,39 +275,46 @@ Orb_t Orb_E_TYPE(struct Orb_priv_eh_s*);
 Orb_t Orb_E_VALUE(struct Orb_priv_eh_s*);
 void Orb_E_RETHROW(struct Orb_priv_eh_s*);
 
-/*object construction*/
+/*object constructors*/
 /*
-Orb_t rv;
-Orb_BUILDER {
-	Orb_B_PARENT(Orb_NOTFOUND);
-	Orb_B_FIELD_cc("**val**", val);
-} rv = Orb_ENDBUILDER;
+Orb_t cons;
+Orb_CONSTRUCTOR {
+	Orb_C_NAME_cc("<orb>*cons");
+	Orb_C_FIELD_cc("a");
+	Orb_C_FIELD_cc("d");
+} cons = Orb_ENDCONSTRUCTOR;
 */
-struct Orb_priv_ob_s;
-#define Orb_BUILDER\
-	do { struct Orb_priv_ob_s* Orb_priv_ob = Orb_priv_ob_start();
-#define Orb_B_PARENT(v)\
-		Orb_priv_ob_parent(Orb_priv_ob, v)
-#define Orb_B_FIELD_AS_IF_VIRTUAL(f, v)\
-		Orb_priv_ob_field_as_if_virtual(Orb_priv_ob, f, v)
-#define Orb_B_FIELD(f, v)\
-		Orb_priv_ob_field(Orb_priv_ob, f, v)
-#define Orb_B_FIELD_AS_IF_VIRTUAL_cc(f, v)\
-		Orb_priv_ob_field_as_if_virtual(Orb_priv_ob, Orb_symbol_cc(f), v)
-#define Orb_B_FIELD_cc(f, v)\
-		Orb_priv_ob_field(Orb_priv_ob, Orb_symbol_cc(f), v)
-#define Orb_ENDBUILDER\
-	Orb_priv_ob_build(Orb_priv_ob); } while(0)
+#define Orb_CONSTRUCTOR\
+	do {\
+		Orb_priv_cons Orb_priv_cons_d;\
+		Orb_priv_cons_init(&Orb_priv_cons_d);\
+		int Orb_priv_cons_tmp;\
+		for(	Orb_priv_cons_tmp = 1;\
+			Orb_priv_cons_tmp;\
+			Orb_priv_cons_tmp = 0)
+#define Orb_C_NAME(o)\
+			Orb_priv_cons_d.name = o\
+#define Orb_C_NAME_cc(s)\
+			Orb_C_NAME(Orb_symbol_cc(s))
+#define Orb_C_FIELD(o)\
+			Orb_priv_cons_field(&Orb_priv_cons_d, o)
+#define Orb_C_FIELD_cc(s)\
+			Orb_priv_cons_field(Orb_symbol_cc(s))
+#define Orb_ENDCONSTRUCTOR\
+		Orb_priv_cons_finish(&Orb_priv_cons_d)\
+	} while(0)
+struct Orb_priv_cons_s {
+	size_t sz;
+	size_t ln;
+	Orb_t* format;
+	Orb_t name;
+	void* reserved;
+};
+typedef struct Orb_priv_cons_s Orb_priv_cons;
 
-struct Orb_priv_ob_s* Orb_priv_ob_start(void);
-void Orb_priv_ob_parent(struct Orb_priv_ob_s*, Orb_t);
-void Orb_priv_ob_field_as_if_virtual(struct Orb_priv_ob_s*, Orb_t, Orb_t);
-void Orb_priv_ob_field(struct Orb_priv_ob_s*, Orb_t, Orb_t);
-Orb_t Orb_priv_ob_build(struct Orb_priv_ob_s*);
-
-Orb_t Orb_virtual(Orb_t);
-Orb_t Orb_virtual_x(void);
-Orb_t Orb_method(Orb_t);
+void Orb_priv_cons_init(Orb_priv_cons*);
+void Orb_priv_cons_field(Orb_priv_cons*, Orb_t);
+Orb_t Orb_priv_cons_finish(Orb_priv_cons*);
 
 /*
  * Conversion to boolean

@@ -47,4 +47,115 @@ Assuming that by identity order, 'd < 'a:
   format[5] = 1
 */
 
+Orb_t Orb_SYMBOLFORMAT;
+Orb_t Orb_NUMBERFORMAT;
+Orb_t Orb_POINTERFORMAT;
+
+/*format for constructors*/
+static Orb_t consf;
+static Orb_t econsf; /*empty constructors*/
+
+/*cfunc pointers for constructors*/
+static Orb_t cons_cf;
+static Orb_t econs_cf;
+
+/*search through list of fields*/
+static size_t binsearch(Orb_t* fields, size_t sz, Orb_t f) {
+	size_t lo = 0, hi = sz;
+	while(lo != hi) {
+		size_t mid = lo + (hi - lo) / 2;
+		Orb_t test = fields[2 * mid];
+		if(f < test) {
+			hi = mid;
+		} else if(test < f) {
+			lo = mid + 1;
+		} else {
+			return mid;
+		}
+	}
+	return lo;
+}
+
+void Orb_priv_cons_init(Orb_priv_cons* d) {
+	d->sz = 0;
+	d->format = 0;
+	d->name = Orb_NOTFOUND;
+	d->reserved = 0;
+}
+void Orb_priv_cons_field(Orb_priv_cons* d, Orb_t f) {
+	if(d->format == 0) {
+		/*initialize the format pointer*/
+		size_t nln = 6;
+		d->format = Orb_gc_malloc(nln * sizeof(Orb_t));
+		d->ln = nln;
+	} else if(d->sz * 2 + 2 == d->ln) {
+		/*not enough space in the format*/
+		size_t nln = d->ln + d->ln / 2;
+		if(nln & 1) ++nln; /*keep it even*/
+		Orb_t* nformat = Orb_gc_malloc(nln * sizeof(Orb_t));
+		memcpy(&nformat[2], &d->format[2],
+			(d->sz * 2) * sizeof(Orb_t)
+		);
+		Orb_gc_free(d->format);
+		d->format = nformat;
+		d->ln = nln;
+	}
+	/*find insertion point*/
+	size_t i = binsearch(&d->format[2], d->sz, f);
+	if(i < d->sz) {
+		/*move insertion point*/
+		memmove(&d->format[(i + 1) * 2 + 2], &d->format[i * 2 + 2],
+			((d->sz - i) * 2) * sizeof(Orb_t)
+		);
+	}
+	/*insert it*/
+	d->format[2 + i * 2] = f;
+	d->format[2 + i * 2 + 1] = Orb_t_from_integer(d->sz);
+	++d->sz;
+}
+Orb_t Orb_priv_cons_finish(Orb_priv_cons* d) {
+	/*is it an empty format?*/
+	if(d->sz == 0) {
+		/*empty constructor:
+			(*econsf **cfunc** format ob)
+		*/
+		/*The format doesn't exist yet.  Create
+		one.
+		*/
+		Orb_t* format = Orb_gc_malloc(2 * sizeof(Orb_t));
+		format[0] = Orb_t_from_integer(0);
+		format[1] = d->name;
+		Orb_t oformat = Orb_t_from_pointer(format);
+
+		/*now create the object*/
+		Orb_t* obj = Orb_gc_malloc(1 * sizeof(Orb_t));
+		obj[0] = oformat;
+		Orb_t oo = ((Orb_t) obj) + Orb_TAG_OBJECT;
+
+		/*finally create the constructor*/
+		Orb_t* rv = Orb_gc_malloc(4 * sizeof(Orb_t));
+		rv[0] = econsf;
+		rv[1] = econs_cf;
+		rv[2] = oformat;
+		rv[3] = oo;
+		Orb_t orv = ((Orb_t) obj) + Orb_TAG_OBJECT;
+
+		return orv;
+	} else {
+		/*non-empty constructor:
+			(*consf **cfunc** format)
+		*/
+		d->format[0] = Orb_t_from_integer(d->sz);
+		d->format[1] = d->name;
+		Orb_t oformat = Orb_t_from_pointer(format);
+
+		Orb_t* rv = Orb_gc_malloc(3 * sizeof(Orb_t));
+		rv[0] = consf;
+		rv[1] = cons_cf;
+		rv[2] = oformat;
+		Orb_t orv = ((Orb_t) obj) + Orb_TAG_OBJECT;
+
+		return orv;
+	}
+}
 
