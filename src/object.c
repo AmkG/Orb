@@ -19,6 +19,8 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 
 #include"liborb.h"
 
+#include<memory.h>
+
 /*
 Objects are tagged tuples, represented by simple
 flat arrays.  The 0th entry is an opaque pointer
@@ -138,7 +140,7 @@ Orb_t Orb_priv_cons_finish(Orb_priv_cons* d) {
 		rv[1] = econs_cf;
 		rv[2] = oformat;
 		rv[3] = oo;
-		Orb_t orv = ((Orb_t) obj) + Orb_TAG_OBJECT;
+		Orb_t orv = ((Orb_t) rv) + Orb_TAG_OBJECT;
 
 		return orv;
 	} else {
@@ -147,13 +149,13 @@ Orb_t Orb_priv_cons_finish(Orb_priv_cons* d) {
 		*/
 		d->format[0] = Orb_t_from_integer(d->sz);
 		d->format[1] = d->name;
-		Orb_t oformat = Orb_t_from_pointer(format);
+		Orb_t oformat = Orb_t_from_pointer(d->format);
 
 		Orb_t* rv = Orb_gc_malloc(3 * sizeof(Orb_t));
 		rv[0] = consf;
 		rv[1] = cons_cf;
 		rv[2] = oformat;
-		Orb_t orv = ((Orb_t) obj) + Orb_TAG_OBJECT;
+		Orb_t orv = ((Orb_t) rv) + Orb_TAG_OBJECT;
 
 		return orv;
 	}
