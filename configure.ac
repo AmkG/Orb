@@ -21,7 +21,7 @@ AC_PREREQ([2.63])
 AC_INIT([Orb], [0.1], [almkglor@gmail.com])
 AM_INIT_AUTOMAKE([])
 
-AC_CONFIG_SRCDIR([src/symbol.c])
+AC_CONFIG_SRCDIR([src/object.c])
 AC_CONFIG_HEADERS([inc/liborb-config.h])
 
 LT_INIT
