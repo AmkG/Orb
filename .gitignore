@@ -18,4 +18,5 @@ config.h
 Makefile
 libtool
 stamp-h1
+INSTALL
 
