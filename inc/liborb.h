@@ -293,7 +293,7 @@ Orb_CONSTRUCTOR {
 			Orb_priv_cons_tmp;\
 			Orb_priv_cons_tmp = 0)
 #define Orb_C_NAME(o)\
-			Orb_priv_cons_d.name = o\
+			Orb_priv_cons_d.name = o
 #define Orb_C_NAME_cc(s)\
 			Orb_C_NAME(Orb_symbol_cc(s))
 #define Orb_C_FIELD(o)\
