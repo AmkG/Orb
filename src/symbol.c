@@ -119,3 +119,48 @@ static Orb_t symbol_direct(char const* cs, int copy_flag) {
 	}
 }
 
+/*returns a symbol, assuming that the string is **not**
+a constant, global string.  Thus if a symbol must be
+created, the string is copied.
+*/
+Orb_t Orb_symbol(char const* cs) {
+	return symbol_direct(cs, 1);
+}
+
+/*returns a symbol, assuming that the string is a constant
+global string that will exist for as long as the program
+exists.  It should be used with string literals.
+We assume that every call site of Orb_symbol_cc will always
+call it with the same address.
+*/
+Orb_t Orb_symbol_cc(char const* cs) {
+	Orb_t ocs = Orb_t_from_pointer(cs);
+
+	Orb_t occtb = Orb_cell_get(c_cc);
+	Orb_tree_t cctb = Orb_t_as_pointer(occtb);
+
+	Orb_t rv = Orb_tree_lookup(cctb, ocs);
+	if(rv != Orb_NOTFOUND) {
+		return rv;
+	}
+
+	/*cs is constant, so we don't have to alloc extra
+	space for it.
+	*/
+	rv = symbol_direct(cs, 0);
+
+	/*now insert it into the cc tree.  We just keep inserting*/
+	for(;;) {
+		Orb_tree_t ncctb = Orb_tree_insert(cctb, ocs, rv);
+		Orb_t oncctb = Orb_t_from_pointer(ncctb);
+
+		Orb_t old = Orb_cell_cas_get(c_cc, occtb, oncctb);
+		if(old == occtb) {
+			return rv;
+		} else {
+			occtb = old;
+			cctb = Orb_t_as_pointer(occtb);
+		}
+	}
+}
+
