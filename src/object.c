@@ -155,9 +155,12 @@ Orb_t Orb_priv_cons_finish(Orb_priv_cons* d) {
 		rv[0] = consf;
 		rv[1] = cons_cf;
 		rv[2] = oformat;
+		rv[3] = Orb_t_from_integer(d->sz);
 		Orb_t orv = ((Orb_t) rv) + Orb_TAG_OBJECT;
 
 		return orv;
 	}
 }
+
+
 
