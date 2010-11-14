@@ -21,8 +21,8 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 
 #include"liborb.h"
 
-extern Orb_t Orb_SYMBOLBASE;
-extern Orb_t Orb_actual_symbolbase;
+/*how large symbols are*/
+#define Orb_SYMBOLSIZE 2
 
 void Orb_symbol_init(void);
 

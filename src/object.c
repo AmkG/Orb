@@ -18,6 +18,7 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include"liborb.h"
+#include"symbol.h"
 
 #include<memory.h>
 
@@ -49,9 +50,12 @@ Assuming that by identity order, 'd < 'a:
   format[5] = 1
 */
 
+/*format for symbols*/
 Orb_t Orb_SYMBOLFORMAT;
-Orb_t Orb_NUMBERFORMAT;
-Orb_t Orb_POINTERFORMAT;
+
+/*format for numbers and pointers*/
+static Orb_t numf;
+static Orb_t ptrf;
 
 /*format for constructors*/
 static Orb_t consf;
@@ -112,7 +116,7 @@ void Orb_priv_cons_field(Orb_priv_cons* d, Orb_t f) {
 	}
 	/*insert it*/
 	d->format[2 + i * 2] = f;
-	d->format[2 + i * 2 + 1] = Orb_t_from_integer(d->sz);
+	d->format[2 + i * 2 + 1] = Orb_t_from_integer(d->sz + 1);
 	++d->sz;
 }
 Orb_t Orb_priv_cons_finish(Orb_priv_cons* d) {
@@ -162,5 +166,25 @@ Orb_t Orb_priv_cons_finish(Orb_priv_cons* d) {
 	}
 }
 
+void Orb_object_init_before_symbol(void) {
+	/*create an empty format for symbols*/
+	Orb_SYMBOLFORMAT = Orb_t_from_pointer(
+		Orb_gc_malloc((2 + (2 * Orb_SYMBOLSIZE)) * sizeof(Orb_t))
+	);
+}
+void Orb_object_init_after_symbol(void) {
+	/*Fill in the symbol format*/
+	{ Orb_t* format = Orb_t_as_pointer(Orb_SYMBOLFORMAT);
+		format[0] = Orb_t_from_integer(Orb_SYMBOLSIZE);
+		format[1] = Orb_symbol_cc("*symbol");
 
+		/*fill in field names as integers*/
+		size_t i;
+		for(i = 0; i < Orb_SYMBOLSIZE; ++i) {
+			format[2 + 2 * i] = Orb_t_from_integer(i + 1);
+			format[2 + 2 * i + 1] = Orb_t_from_integer(i + 1);
+		}
+	}
+	/*TODO*/
+}
 
