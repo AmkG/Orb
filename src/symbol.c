@@ -48,6 +48,8 @@ static int cc_cmp(Orb_t oa, Orb_t ob) {
 	return oa < ob;
 }
 
+static Orb_t unbound;
+
 void Orb_symbol_init(void) {
 	Orb_tree_t init_tree = Orb_tree_init(&symcmp);
 
@@ -57,7 +59,12 @@ void Orb_symbol_init(void) {
 	Orb_tree_t init_cc_tree = Orb_tree_init(&cc_cmp);
 	Orb_gc_defglobal(&c_cc);
 	c_cc = Orb_cell_init(Orb_t_from_pointer(init_cc_tree));
+
+	unbound = Orb_t_from_pointer(&unbound);
 }
+
+#define I_STRING 1
+#define I_BINDING 2
 
 /*symbol lookup
  * cs is the string to look up.
@@ -98,8 +105,8 @@ static Orb_t symbol_direct(char const* cs, int copy_flag) {
 					(Orb_SYMBOLSIZE + 1) * sizeof(Orb_t)
 				);
 				aas[0] = Orb_SYMBOLFORMAT;
-				aas[1] = ocs;
-				aas[2] = Orb_t_from_pointer(slot);
+				aas[I_STRING]  = ocs;
+				aas[I_BINDING] = Orb_t_from_pointer(slot);
 
 				asym = ((Orb_t) aas) + Orb_TAG_OBJECT;
 			}
@@ -207,5 +214,25 @@ Orb_t Orb_symbol_sz(char const* cs, size_t sz) {
 
 	/*no need to copy*/
 	return symbol_direct(ncs, 0);
+}
+
+Orb_t Orb_symeval(Orb_t sym) {
+	Orb_t* sa = Orb_t_as_pointer(sym);
+	if(sa[0] != Orb_SYMBOLFORMAT) {
+		Orb_THROW_cc("<orb>eval",
+			"Attempt to evaluate non-symbol as if it were "
+			"a symbol"
+		);
+	}
+
+	Orb_t ob = sa[I_BINDING];
+	Orb_cell_t cb = Orb_t_as_pointer(ob);
+
+	Orb_t rv = Orb_cell_read(cb);
+	if(rv == unbound) {
+		Orb_THROW_cc("<orb>eval", "Unbound symbol");
+	} else {
+		return rv;
+	}
 }
 

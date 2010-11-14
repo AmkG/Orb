@@ -73,6 +73,11 @@ Orb_t Orb_symbol_sz(char const* str, size_t sz);
 Orb_t Orb_symbol(char const* str);
 Orb_t Orb_symbol_cc(char const* str);
 
+Orb_t Orb_symeval(Orb_t);
+static inline Orb_t Orb_symeval_cc(char const* str) {
+	return Orb_symeval(Orb_symbol_cc(str));
+}
+
 Orb_t Orb_ref(Orb_t, Orb_t);
 static inline Orb_t Orb_ref_cc(Orb_t v, char const* str) {
 	return Orb_ref(v, Orb_symbol_cc(str));
