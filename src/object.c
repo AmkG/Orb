@@ -168,6 +168,7 @@ Orb_t Orb_priv_cons_finish(Orb_priv_cons* d) {
 
 void Orb_object_init_before_symbol(void) {
 	/*create an empty format for symbols*/
+	Orb_gc_defglobal(&Orb_SYMBOLFORMAT);
 	Orb_SYMBOLFORMAT = Orb_t_from_pointer(
 		Orb_gc_malloc((2 + (2 * Orb_SYMBOLSIZE)) * sizeof(Orb_t))
 	);
