@@ -19,6 +19,7 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 
 #include"liborb.h"
 #include"symbol.h"
+#include"object.h"
 
 #include<memory.h>
 
