@@ -164,3 +164,48 @@ Orb_t Orb_symbol_cc(char const* cs) {
 	}
 }
 
+/*returns a symbol, where the given string may contain null
+characters.
+Internally we use modified UTF-8, where NULL's are encoded
+with 0xC0, 0x80.
+*/
+Orb_t Orb_symbol_sz(char const* cs, size_t sz) {
+	/*degenerate case*/
+	if(sz == 0) {
+		return Orb_symbol(cs);
+	}
+	size_t ln = sz + sz / 2 + 2;
+
+	char* ncs = Orb_gc_malloc(ln);
+	size_t i, j;
+	for(i = 0, j = 0; i < sz; ++i, ++j) {
+		if(j + 1 == ln) {
+			/*realloc*/
+			size_t rln = ln + ln / 2;
+			char* rcs = Orb_gc_malloc(rln);
+			memmove(rcs, ncs, j);
+			ncs = rcs;
+			ln = rln;
+		}
+		if(cs[i] == 0) {
+			ncs[j] = 0xC0;
+			ncs[j + 1] = 0x80;
+			++j;
+			if(j + 1 == ln) {
+				/*realloc*/
+				size_t rln = ln + ln / 2;
+				char* rcs = Orb_gc_malloc(rln);
+				memmove(rcs, ncs, j);
+				ncs = rcs;
+				ln = rln;
+			}
+		} else {
+			ncs[j] = cs[i];
+		}
+	}
+	ncs[j] = 0;
+
+	/*no need to copy*/
+	return symbol_direct(ncs, 0);
+}
+
