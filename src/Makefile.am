@@ -26,52 +26,19 @@ liborb_la_SOURCES =\
 	thread-support.c\
 	symbol.c\
 	gc.c\
-	exception.c\
-	bs-tree.c\
 	object.c\
 	init.c\
-	call.c\
-	c-functions.c\
-	bool.c\
 	thread-pool.c\
-	defer.c\
-	seq.c\
-	seq-iterate.c\
-	seq-map.c\
-	seq-mapreduce.c
+	thread.c
 liborb_la_LDFLAGS = -module
 
 check_PROGRAMS =\
-	check-symbols\
-	check-cf\
-	check-bool\
-	check-thread-pool\
-	check-defer\
-	check-seq-iterate
-check_symbols_SOURCES =\
-	check-symbols.c
-check_symbols_LDADD = liborb.la
-check_symbols_LDFLAGS = -static
-check_cf_SOURCES =\
-	check-cf.c
-check_cf_LDADD = liborb.la
-check_cf_LDFLAGS = -static
-check_bool_SOURCES =\
-	check-bool.c
-check_bool_LDADD = liborb.la
-check_bool_LDFLAGS = -static
-check_thread_pool_SOURCES =\
-	check-thread-pool.c
-check_thread_pool_LDADD = liborb.la
-check_thread_pool_LDFLAGS = -static
-check_defer_SOURCES =\
-	check-defer.c
-check_defer_LDADD = liborb.la
-check_defer_LDFLAGS = -static
-check_seq_iterate_SOURCES =\
-	check-seq-iterate.c
-check_seq_iterate_LDADD = liborb.la
-check_seq_iterate_LDFLAGS = -static
+	test-symbols
+
+test_symbols_SOURCES =\
+	test-symbols.c
+test_symbols_LDADD = liborb.la
+test_symbols_LDFLAGS = -static
 
 TESTS = $(check_PROGRAMS)
 
