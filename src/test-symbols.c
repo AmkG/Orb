@@ -22,7 +22,7 @@ along with Orb C Implementation.  If not, see <http://www.gnu.org/licenses/>.
 #include<assert.h>
 
 int main(void) {
-	Orb_init();
+	Orb_init(0,0);
 
 	assert(Orb_symbol("<foo>foo") == Orb_symbol_cc("<foo>foo"));
 	Orb_t tmp = Orb_symbol_cc("<foo>foo");
