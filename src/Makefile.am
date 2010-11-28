@@ -29,7 +29,7 @@ liborb_la_SOURCES =\
 	object.c\
 	init.c\
 	thread-pool.c\
-	thread.c
+	tree.c
 liborb_la_LDFLAGS = -module
 
 check_PROGRAMS =\
